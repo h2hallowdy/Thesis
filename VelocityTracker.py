@@ -28,17 +28,11 @@ class VelocityTracker():
         return self.velocity    
             
 if __name__ == '__main__':
-    # first
-    # centroidObject = OrderedDict()
-    # centroidObject[1] = np.array((445, 143))
-    # centroidObject[2] = np.array((123, 456))
-    # vt = VelocityTracker(centroidObject)
-    # print(vt.oldObjects)
-    # centroidObject[2] = np.array((1, 2))
-    # vt.update(centroidObject)
-    # vt.velocityChange()
-    # print(vt.velocity)
+    
     centroidObject = OrderedDict()
+    # centroidObject[2] = 3
+    # centroidObject[4] = 1
     vt = VelocityTracker(centroidObject)
-    print(vt.oldObjects)
+    
+    print(len(centroidObject))
     # print(centroidObject)
