@@ -21,31 +21,48 @@ class ProcessItem():
         if self.processObject != None:
             # destructuring the object
             (startX, startY, endX, endY) = self.processObject
-            crop = img[startY - self.error : endY + self.error, startX - self.error : endX + self.error]
+            temp_cx = (startX + endX) / 2.0
+            temp_cy = (startY + endY) / 2.0
+            # crop = img[startY - self.error : endY + self.error, startX - self.error : endX + self.error]
+            crop = img[startY : endY, startX : endX]
+            w, h = crop.shape[1], crop.shape[0]
+            _new_cenX = w / 2.0
+            _new_cenY = h / 2.0
             cropGray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
-            equ = cv2.equalizeHist(cropGray)
-            blur = cv2.GaussianBlur(equ, (5, 5), 0)
-            ret, thresh = cv2.threshold(blur, 102, 255, 0)
+            # equ = cv2.equalizeHist(cropGray)
+            # blur = cv2.GaussianBlur(equ, (5, 5), 0)
+            ret, thresh = cv2.threshold(cropGray, 102, 255, 0)
             myThresh = 255 - thresh
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
             erosion = cv2.erode(myThresh, kernel, iterations=2)
+            cv2.imshow('erosion', erosion)
             _, contours, _ = cv2.findContours(erosion, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             c = max(contours, key = cv2.contourArea)
             rect = cv2.minAreaRect(c)
-            return (crop, rect[2])
+            _cx, _cy = rect[0]
+            deltaX = _cx - _new_cenX
+            deltaY = _cy - _new_cenY
+            cx = temp_cx + deltaX
+            cy = temp_cy + deltaY
+            return (crop, rect[2], cx, cy)
         else:
             return (None, None)
 
 
 
 if __name__ == '__main__':
-    rects = []
-    rects.append((1, 2, 3, 4))
-    rects.append((2, 2, 4, 5))
-
-    pt = ProcessItem()
-    objectSelected = pt.updateObject(rects)
+    crop = cv2.imread('crop.jpg')
+    cropGray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+    # equ = cv2.equalizeHist(cropGray)
+    # blur = cv2.GaussianBlur(equ, (5, 5), 0)
+    ret, thresh = cv2.threshold(cropGray, 102, 255, 0)
+    cv2.imshow('thresh', thresh)
+    myThresh = 255 - thresh
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    erosion = cv2.erode(myThresh, kernel)
+    cv2.imshow('erosion', erosion)
+    _, contours, _ = cv2.findContours(erosion, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    c = max(contours, key = cv2.contourArea)
+    cv2.waitKey(0)
     
-    (x, y, z, t) = objectSelected
-    print(t)
 

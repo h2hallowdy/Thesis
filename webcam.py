@@ -76,13 +76,15 @@ while True:
 			frame = cv2.rectangle(frame, tl, br, (0, 255, 0), 2)
 			
 	pt.updateObject(rects)
-	(crop, angle) = pt.updateAngle(frame)
+	(crop, angle, cx, cy) = pt.updateAngle(frame)
 	if crop is not None:
 		cv2.imshow('Process Item', crop)
-		print(angle)
+		# cv2.circle(crop, (cx, cy), 2, (0, 255, 0), -1)
+		print(cx, cy)
 	else:
 		pass
 	objects = ct.update(rects)
+	# print(objects)
 	vt.update(objects)
 	vt.velocityChange()
 	for (objectID, centroid) in objects.items():
@@ -96,8 +98,10 @@ while True:
 		cv2.putText(frame, textVelocity, (centroid[0] + 10, centroid[1] + 10),
 			cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 		cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
+		
+	# cv2.circle(frame, (cx, cy), 4, (255, 255, 0), -1)
 	
-
+	
 	cv2.imshow('frame', frame)
 	delta_time = (time.time() - stime) * 1000
 	if delta_time > wait_time:
@@ -107,6 +111,7 @@ while True:
 
 
 	if cv2.waitKey(int(delay_time)) & 0xFF == ord('q'):
+		cv2.imwrite('crop.jpg', crop)
 		break
 
 
