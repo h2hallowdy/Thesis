@@ -70,7 +70,7 @@ class ObjectDetection():
             cv2.putText(frame, textVelocity, (centroid[0] + 10, centroid[1] + 10),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
             cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
-        return frame
+        return frame, cx, cy
 
 if __name__ == '__main__':
     od = ObjectDetection()

@@ -23,6 +23,7 @@ class Ui_MainControllerUI(object):
     event = threading.Event()
     stateLiveView = False
     stateAutoMode = False
+    stateProcess = False
     # running = threading.Event()
     # running.set()
     ser = serial.Serial()
@@ -500,9 +501,14 @@ class Ui_MainControllerUI(object):
             message = ''
         if message != '':
             arrayCoordinates = message.split(',')
+            print(arrayCoordinates)
             self.xCurLbl.setText(arrayCoordinates[0])
             self.yCurLbl.setText(arrayCoordinates[1])
             self.zCurLbl.setText(arrayCoordinates[2])
+            if arrayCoordinates[3] == 'd':
+                self.stateProcess = False
+            else:
+                self.stateProcess = True 
         self.timer.setInterval(300)
         # return buf
 
@@ -540,19 +546,24 @@ class Ui_MainControllerUI(object):
             self.updateTimer.stop()
         
     def update_Image(self):
-        frame = self.od.Process()
+        frame, cx, cy = self.od.Process()
         height, width, channel = frame.shape
         bytesPerLine = 3 * width
         qImg = QtGui.QImage(frame.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888).rgbSwapped()
         qPixMap = QtGui.QPixmap(qImg)
         qPixMap = qPixMap.scaled(self.liveVidFrame.width(), self.liveVidFrame.height(),QtCore.Qt.KeepAspectRatio)
         self.liveVidFrame.setPixmap(qPixMap)
-        pointX = 2
-        pointY = 3
+        pointX = (425 - cx) * 30 / 200
+        pointY = (cy * 30 / 196) - 5.8
+        _x = int(pointX)
+        _dotX = int((pointX - _x) * 100)
+        _y = int(pointY)
+        _dotY = int((pointY - _y) * 100)
         self.xProLbl.setText(str(pointX))
         self.yProLbl.setText(str(pointY))
-        if self.state == True:
-            message = '(' + str(pointX) + ',' + str(pointY) + ')\n'
+        if self.state == True and self.stateProcess == False:
+            self.stateProcess = True
+            message = 'g-1' + '{:02d}'.format(_x) + '{:02d}'.format(_dotX) + '-0' + '{:02d}'.format(_y) + '{:02d}'.format(_dotY) + '-0000000' 
             message_bytes = bytes(message, encoding='utf-8')
             self.ser.write(message_bytes)
         self.updateTimer.setInterval(4)
@@ -614,7 +625,7 @@ class Ui_MainControllerUI(object):
                 t_log = GetTime()
                 logging.info(t_log + ': Enter Auto Mode successful.')
                 self.createMessageBox('Camera Auto Enabled!', 'Information', 'infor')
-                self.ser.write(b'a\n')
+                # self.ser.write(b'a\n')
                 time.sleep(4)
                 self.enableCam()
         else:
