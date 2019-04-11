@@ -52,7 +52,7 @@ class ObjectDetection():
         (crop, angle, cx, cy) = self.pt.updateAngle(frame)
         if crop is not None:
             cv2.imshow('Process Item', crop)
-            print(cx, cy)
+            # print(angle)
         else:
             pass
         objects = self.ct.update(rects)
@@ -70,10 +70,15 @@ class ObjectDetection():
             cv2.putText(frame, textVelocity, (centroid[0] + 10, centroid[1] + 10),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
             cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
-        return frame, cx, cy
+        return frame, cx, cy, crop
 
 if __name__ == '__main__':
     od = ObjectDetection()
-    frame = od.Process()
-    cv2.imshow('Frame', frame)
-    cv2.waitKey(0)
+    while True:
+        frame, cx, cy, crop = od.Process()
+        cv2.imshow('Frame', frame)
+        
+        if cv2.waitKey(1) == ord('q'):
+            
+            break
+    cv2.destroyAllWindows()

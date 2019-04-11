@@ -39,7 +39,29 @@ class ProcessItem():
             _, contours, _ = cv2.findContours(erosion, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             c = max(contours, key = cv2.contourArea)
             rect = cv2.minAreaRect(c)
+            box = cv2.boxPoints(rect)
+            box = np.int0(box)
+            # Calculate direction of product ##########################
+            vtcp = box[0] - box[1]
+            vtcp[1] = -vtcp[1]
+            vtpt = vtcp
             _cx, _cy = rect[0]
+            # ax + by + c = 0 => c = -ax - by
+            c = -vtpt[0] * _cx - vtpt[1] * _cy
+            sum1 = 0
+            sum2 = 0
+            for x in range(0, w):
+                for y in range(0, h):
+                    if vtpt[0] * x + vtpt[1] * y + c > 0:
+                        sum1 += int(erosion[y, x] / 255)
+                    else:
+                        sum2 += int(erosion[y, x] / 255)
+            # print(box)
+            # if sum1 > sum2:
+                
+            # else:
+                
+
             deltaX = _cx - _new_cenX
             deltaY = _cy - _new_cenY
             cx = temp_cx + deltaX

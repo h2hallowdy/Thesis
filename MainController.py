@@ -546,7 +546,7 @@ class Ui_MainControllerUI(object):
             self.updateTimer.stop()
         
     def update_Image(self):
-        frame, cx, cy = self.od.Process()
+        frame, cx, cy, _ = self.od.Process()
         height, width, channel = frame.shape
         bytesPerLine = 3 * width
         qImg = QtGui.QImage(frame.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888).rgbSwapped()
