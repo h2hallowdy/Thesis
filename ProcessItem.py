@@ -19,8 +19,7 @@ class ProcessItem():
         return self.processObject
     
     def updateAngle(self, img):
-        if self.processObject != None:
-            
+        if self.processObject != None:    
             #region: Normal IP to get real rectangle
             # destructuring the object
             (startX, startY, endX, endY) = self.processObject
@@ -32,26 +31,42 @@ class ProcessItem():
             _new_cenX = w / 2.0
             _new_cenY = h / 2.0
             cropGray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
-            ret, thresh = cv2.threshold(cropGray, 102, 255, 0)
-            myThresh = 255 - thresh
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-            erosion = cv2.erode(myThresh, kernel)
-            dilation = cv2.dilate(erosion, kernel)
-            cv2.imshow('erosion', dilation)
-            _, contours, _ = cv2.findContours(dilation, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            # ret, thresh = cv2.threshold(cropGray, 102, 255, 0)
+            th = cv2.adaptiveThreshold(cropGray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, 2)
+            median = cv2.medianBlur(th, 7)
+            median = 255 - median
+            # myThresh = 255 - thresh
+            # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+            # erosion = cv2.erode(myThresh, kernel)
+            # dilation = cv2.dilate(erosion, kernel)
+            # cv2.imshow('erosion', dilation)
+            _, contours, _ = cv2.findContours(median, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             c = max(contours, key = cv2.contourArea)
             rect = cv2.minAreaRect(c)
             box = cv2.boxPoints(rect)
             box = np.int0(box)
-            cv2.drawContours(crop, [box],0,(0,0,255),1)
+            # cv2.drawContours(crop, [box],0,(0,0,255),1)
             #endregion
 
             #region: Calculate direction of product
             cropAngle = self.BlueFilter(crop)
+            cv2.imshow('haha',cropAngle)
             aw, ah = cropAngle.shape[1], cropAngle.shape[0]
-            vtcp = box[0] - box[1]
-            vtcp[1] = -vtcp[1]
-            vtpt = vtcp
+
+            myLength1 = self.calculation(box[0], box[1])
+            myLength2 = self.calculation(box[1], box[2])
+            if myLength1 < myLength2:
+                vtcp = box[0] - box[1]
+                vtcp[1] = -vtcp[1]
+                vtpt = vtcp
+                cen1 = (box[0] + box[1]) / 2
+                cen2 = (box[2] + box[3]) / 2
+            else:
+                vtcp = box[1] - box[2]
+                vtcp[1] = -vtcp[1]
+                vtpt = vtcp
+                cen1 = (box[0] + box[3]) / 2
+                cen2 = (box[2] + box[1]) / 2
             _cx, _cy = rect[0]
             # ax + by + c = 0 => c = -ax - by
             c = -vtpt[0] * _cx - vtpt[1] * _cy
@@ -60,13 +75,13 @@ class ProcessItem():
             for x in range(0, w):
                 for y in range(0, h):
                     if vtpt[0] * x + vtpt[1] * y + c > 0:
-                        sum1 += int(cropAngle[y, x] / 255)
+                        sum1 += int(cropAngle[y, x])
                     else:
-                        sum2 += int(cropAngle[y, x] / 255)
-
-            cen1 = (box[0] + box[1]) / 2
-            cen2 = (box[2] + box[3]) / 2
-            if sum1 > sum2: #head in sum1
+                        sum2 += int(cropAngle[y, x])
+            
+            # cen1 = np.ndarray(shape=(1, 2))
+            # cen2 = np.ndarray(shape=(1, 2))
+            if sum1 >= sum2: #head in sum1
                 if vtpt[0] * cen1[0] + vtpt[1] * cen1[1] + c > 0:
                     dau = cen1
                     dit = cen2
@@ -83,22 +98,24 @@ class ProcessItem():
             #endregion
 
             #region: Calculate angle
-            dXh = _cx - dau[0]
-            dYh = _cy - dau[1]
-            dXd = _cx - dit[0]
-            dYd = _cy - dit[1]
+            
             v1 = dau - dit
             v2 = [-3, 0]
             v_dot = v1[0] * v2[0] + v1[1] * v2[1]
             d1 = math.sqrt(v1[0]*v1[0] + v1[1]*v1[1])
             d2 = math.sqrt(v2[0]*v2[0] + v2[1]*v2[1])
             cos = v_dot / (d1*d2)
-            print(cos)
+            
+            # Positive
+            if dau[1] >= dau[0]:
+                angle = math.acos(cos)
+            else:
+                angle = -math.acos(cos)
             #endregion
 
             # Return real world center of product.
             deltaX = _new_cenX - _cx
-            deltaY = _new_cenY - _cY
+            deltaY = _new_cenY - _cy
             cx = temp_cx - deltaX
             cy = temp_cy - deltaY
             return (crop, angle, cx, cy)
@@ -114,6 +131,12 @@ class ProcessItem():
         n = cv2.cvtColor(res, cv2.COLOR_HSV2BGR)
         resg = cv2.cvtColor(n, cv2.COLOR_BGR2GRAY)
         return resg
+
+    def calculation(self, x1, x2):
+        dx = x1[0] - x2[0]
+        dy = x1[1] - x2[1]
+        length = math.sqrt((math.pow(dx, 2)) + (math.pow(dy, 2)))
+        return length
 
 if __name__ == '__main__':
     crop = cv2.imread('crop.jpg')

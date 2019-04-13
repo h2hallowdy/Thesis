@@ -30,10 +30,14 @@ class ObjectDetection():
         fps = self.capture.get(cv2.CAP_PROP_FPS)
         self.wait_time = 1000 / fps
         self.count = 0
+        self.angle = 0
+        self.cx = 0
+        self.cy = 0
     
     def Process(self):
         ret, frame = self.capture.read()
         frame = cv2.resize(frame, (640, 360))
+        frame_copy = frame.copy()
         results = self.tfnet.return_predict(frame)
         rects = []
         
@@ -51,27 +55,27 @@ class ObjectDetection():
                 # frame = cv2.rectangle(frame, tl, br, (0, 255, 0), 2)    
         self.pt.updateObject(rects)
         (crop, angle, cx, cy) = self.pt.updateAngle(frame)
-        # if crop is not None:
-        #     cv2.imshow('Process Item', crop)
-        #     # print(angle)
-        # else:
-        #     pass
+        
         objects = self.ct.update(rects)
-        # for debugging
-        # print(objects)
+
         self.vt.update(objects)
         self.vt.velocityChange()
+        if crop is not None:
+            print(cx, cy, angle)
+        else:
+            pass
+        # for displaying
         # for (objectID, centroid) in objects.items():
         #     velocity = self.vt.velocity[objectID]
         #     # draw both the ID of the object and the centroid of the
         #     # object on the output frame
         #     text = "ID {}".format(objectID)
         #     textVelocity = "{}".format(velocity)
-        #     cv2.putText(frame, text, (centroid[0] - 10, centroid[1] - 10),
+        #     cv2.putText(frame_copy, text, (centroid[0] - 10, centroid[1] - 10),
         #         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-        #     cv2.putText(frame, textVelocity, (centroid[0] + 10, centroid[1] + 10),
+        #     cv2.putText(frame_copy, textVelocity, (centroid[0] + 10, centroid[1] + 10),
         #         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
-        #     cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
+        #     cv2.circle(frame_copy, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
         return frame, cx, cy, crop
 
 if __name__ == '__main__':

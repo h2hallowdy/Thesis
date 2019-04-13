@@ -553,6 +553,7 @@ class Ui_MainControllerUI(object):
         qPixMap = QtGui.QPixmap(qImg)
         qPixMap = qPixMap.scaled(self.liveVidFrame.width(), self.liveVidFrame.height(),QtCore.Qt.KeepAspectRatio)
         self.liveVidFrame.setPixmap(qPixMap)
+        
         pointX = (425 - cx) * 30 / 200
         pointY = (cy * 30 / 196) - 5.8
         _x = int(pointX)
