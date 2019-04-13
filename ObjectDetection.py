@@ -29,6 +29,7 @@ class ObjectDetection():
 
         fps = self.capture.get(cv2.CAP_PROP_FPS)
         self.wait_time = 1000 / fps
+        self.count = 0
     
     def Process(self):
         ret, frame = self.capture.read()
@@ -44,32 +45,33 @@ class ObjectDetection():
             confidence = result['confidence']
             text = '{}: {:.0f}%'.format(label, confidence * 100)
             (startX, startY, endX, endY) = (result['topleft']['x'], result['topleft']['y'], result['bottomright']['x'], result['bottomright']['y'])
-            if confidence > 0.70:
+            if confidence > 0.70 and ((startX + endX) / 2) < 300:
                 rects.append((startX, startY, endX, endY))
 
-                frame = cv2.rectangle(frame, tl, br, (0, 255, 0), 2)    
+                # frame = cv2.rectangle(frame, tl, br, (0, 255, 0), 2)    
         self.pt.updateObject(rects)
         (crop, angle, cx, cy) = self.pt.updateAngle(frame)
-        if crop is not None:
-            cv2.imshow('Process Item', crop)
-            # print(angle)
-        else:
-            pass
+        # if crop is not None:
+        #     cv2.imshow('Process Item', crop)
+        #     # print(angle)
+        # else:
+        #     pass
         objects = self.ct.update(rects)
+        # for debugging
         # print(objects)
         self.vt.update(objects)
         self.vt.velocityChange()
-        for (objectID, centroid) in objects.items():
-            velocity = self.vt.velocity[objectID]
-            # draw both the ID of the object and the centroid of the
-            # object on the output frame
-            text = "ID {}".format(objectID)
-            textVelocity = "{}".format(velocity)
-            cv2.putText(frame, text, (centroid[0] - 10, centroid[1] - 10),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-            cv2.putText(frame, textVelocity, (centroid[0] + 10, centroid[1] + 10),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
-            cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
+        # for (objectID, centroid) in objects.items():
+        #     velocity = self.vt.velocity[objectID]
+        #     # draw both the ID of the object and the centroid of the
+        #     # object on the output frame
+        #     text = "ID {}".format(objectID)
+        #     textVelocity = "{}".format(velocity)
+        #     cv2.putText(frame, text, (centroid[0] - 10, centroid[1] - 10),
+        #         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        #     cv2.putText(frame, textVelocity, (centroid[0] + 10, centroid[1] + 10),
+        #         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+        #     cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
         return frame, cx, cy, crop
 
 if __name__ == '__main__':
@@ -79,6 +81,6 @@ if __name__ == '__main__':
         cv2.imshow('Frame', frame)
         
         if cv2.waitKey(1) == ord('q'):
-            
+            cv2.imwrite('crop.jpg', crop)
             break
     cv2.destroyAllWindows()

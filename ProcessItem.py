@@ -1,6 +1,7 @@
 import cv2
 from collections import OrderedDict
 import numpy as np
+import math
 
 class ProcessItem():
     def __init__(self, error=20):
@@ -19,29 +20,35 @@ class ProcessItem():
     
     def updateAngle(self, img):
         if self.processObject != None:
+            
+            #region: Normal IP to get real rectangle
             # destructuring the object
             (startX, startY, endX, endY) = self.processObject
             temp_cx = (startX + endX) / 2.0
             temp_cy = (startY + endY) / 2.0
-            # crop = img[startY - self.error : endY + self.error, startX - self.error : endX + self.error]
-            crop = img[startY : endY, startX : endX]
+            crop = img[startY - self.error : endY + self.error, startX - self.error : endX + self.error]
+            # crop = img[startY : endY, startX : endX]
             w, h = crop.shape[1], crop.shape[0]
             _new_cenX = w / 2.0
             _new_cenY = h / 2.0
             cropGray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
-            # equ = cv2.equalizeHist(cropGray)
-            # blur = cv2.GaussianBlur(equ, (5, 5), 0)
             ret, thresh = cv2.threshold(cropGray, 102, 255, 0)
             myThresh = 255 - thresh
             kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-            erosion = cv2.erode(myThresh, kernel, iterations=2)
-            cv2.imshow('erosion', erosion)
-            _, contours, _ = cv2.findContours(erosion, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            erosion = cv2.erode(myThresh, kernel)
+            dilation = cv2.dilate(erosion, kernel)
+            cv2.imshow('erosion', dilation)
+            _, contours, _ = cv2.findContours(dilation, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             c = max(contours, key = cv2.contourArea)
             rect = cv2.minAreaRect(c)
             box = cv2.boxPoints(rect)
             box = np.int0(box)
-            # Calculate direction of product ##########################
+            cv2.drawContours(crop, [box],0,(0,0,255),1)
+            #endregion
+
+            #region: Calculate direction of product
+            cropAngle = self.BlueFilter(crop)
+            aw, ah = cropAngle.shape[1], cropAngle.shape[0]
             vtcp = box[0] - box[1]
             vtcp[1] = -vtcp[1]
             vtpt = vtcp
@@ -53,24 +60,60 @@ class ProcessItem():
             for x in range(0, w):
                 for y in range(0, h):
                     if vtpt[0] * x + vtpt[1] * y + c > 0:
-                        sum1 += int(erosion[y, x] / 255)
+                        sum1 += int(cropAngle[y, x] / 255)
                     else:
-                        sum2 += int(erosion[y, x] / 255)
-            # print(box)
-            # if sum1 > sum2:
-                
-            # else:
-                
+                        sum2 += int(cropAngle[y, x] / 255)
 
-            deltaX = _cx - _new_cenX
-            deltaY = _cy - _new_cenY
-            cx = temp_cx + deltaX
-            cy = temp_cy + deltaY
-            return (crop, rect[2], cx, cy)
+            cen1 = (box[0] + box[1]) / 2
+            cen2 = (box[2] + box[3]) / 2
+            if sum1 > sum2: #head in sum1
+                if vtpt[0] * cen1[0] + vtpt[1] * cen1[1] + c > 0:
+                    dau = cen1
+                    dit = cen2
+                else:
+                    dau = cen2
+                    dit = cen1
+            elif sum2 > sum1: #head in sum2
+                if vtpt[0] * cen1[0] + vtpt[1] * cen1[1] + c < 0:
+                    dau = cen1
+                    dit = cen2
+                else:
+                    dau = cen2
+                    dit = cen1
+            #endregion
+
+            #region: Calculate angle
+            dXh = _cx - dau[0]
+            dYh = _cy - dau[1]
+            dXd = _cx - dit[0]
+            dYd = _cy - dit[1]
+            v1 = dau - dit
+            v2 = [-3, 0]
+            v_dot = v1[0] * v2[0] + v1[1] * v2[1]
+            d1 = math.sqrt(v1[0]*v1[0] + v1[1]*v1[1])
+            d2 = math.sqrt(v2[0]*v2[0] + v2[1]*v2[1])
+            cos = v_dot / (d1*d2)
+            print(cos)
+            #endregion
+
+            # Return real world center of product.
+            deltaX = _new_cenX - _cx
+            deltaY = _new_cenY - _cY
+            cx = temp_cx - deltaX
+            cy = temp_cy - deltaY
+            return (crop, angle, cx, cy)
         else:
-            return (None, None)
+            return (None, None, None, None)
 
-
+    def BlueFilter(self, img):
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        lower_blue = np.array([110,50,50])
+        upper_blue = np.array([130,255,255])
+        mask = cv2.inRange(hsv, lower_blue, upper_blue)
+        res = cv2.bitwise_and(img, img, mask = mask)
+        n = cv2.cvtColor(res, cv2.COLOR_HSV2BGR)
+        resg = cv2.cvtColor(n, cv2.COLOR_BGR2GRAY)
+        return resg
 
 if __name__ == '__main__':
     crop = cv2.imread('crop.jpg')
