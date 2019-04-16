@@ -36,7 +36,7 @@ class Ui_MainControllerUI(object):
         super(Ui_MainControllerUI, self).__init__()
         self.homeX = 0
         self.homeY = 0
-        self.camera = Camera(0)
+        # self.camera = Camera(0)
         
         self.od = ObjectDetection()
         t_filename = GetTimeForFile()
@@ -637,7 +637,7 @@ class Ui_MainControllerUI(object):
                 logging.info(t_log + ': Enter Auto Mode successful.')
                 self.createMessageBox('Camera Auto Enabled!', 'Information', 'infor')
                 # self.ser.write(b'a\n')
-                time.sleep(4)
+                
                 self.enableCam()
         else:
             logging.basicConfig(filename=self.FILE_LOG, level=logging.INFO)
@@ -653,47 +653,47 @@ class Ui_MainControllerUI(object):
         self.stateHoming = not self.stateHoming
         if self.stateHoming == True:
             # for homing
-            self.camera.initialize()
+            
             self.updateTimerHoming = QtCore.QTimer()
             self.updateTimerHoming.timeout.connect(self.ImageForHoming)
             self.updateTimerHoming.start(1)
             
         else:
-            last_frame = self.camera.get_frame()
+            last_frame = self.od.Get_Frame()
             cv2.imwrite('LastFrame.jpg', last_frame)
             self.GetHome(last_frame)
-            self.camera.close_camera()
+            
             self.updateTimerHoming.stop()
     def ImageForHoming(self):
-        frame = self.camera.get_frame()
+        frame = self.od.Get_Frame()
         height, width, channel = frame.shape
         bytesPerLine = 3 * width
         qImg = QtGui.QImage(frame.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888).rgbSwapped()
         qPixMap = QtGui.QPixmap(qImg)
         qPixMap = qPixMap.scaled(self.liveVidFrame.width(), self.liveVidFrame.height(),QtCore.Qt.KeepAspectRatio)
         self.liveVidFrame.setPixmap(qPixMap)
-        self.updateTimerHoming.setInterval(4)   
+        self.updateTimerHoming.setInterval(3)   
     
     def GetHome(self, img):
-        img = cv2.resize(img, (640, 480))
+        # img = cv2.resize(img, (640, 480))
+        median = cv2.medianBlur(img, 5)
+        cg = cv2.cvtColor(median, cv2.COLOR_BGR2GRAY)
+        
+        th = cv2.adaptiveThreshold(cg, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
 
-        cg = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        median = cv2.medianBlur(cg, 5)
-        th = cv2.adaptiveThreshold(median, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 13, 2)
-
-        circles = cv2.HoughCircles(th, cv2.HOUGH_GRADIENT, 1, 20,
+        circles = cv2.HoughCircles(cg, cv2.HOUGH_GRADIENT, 1, 20,
                                param1=30, param2=20,
-                               minRadius=20, maxRadius=30)
+                               minRadius=20, maxRadius=25)
         if circles is not None:
             circles = np.uint16(np.around(circles))
-            for i in circles[0, :]:
-                center = (i[0], i[1])      
-                cv2.circle(median, center, 1, (0, 100, 100), 2)
-                # circle outline
-                radius = i[2]
-                cv2.circle(median, center, radius, (255, 0, 0), 2)
-                cv2.putText(median, str(center[1]), (center[0] + 10, center[1] + 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)    
+            # for i in circles[0, :]:
+            #     center = (i[0], i[1])      
+            #     cv2.circle(median, center, 1, (0, 100, 100), 2)
+            #     # circle outline
+            #     radius = i[2]
+            #     cv2.circle(median, center, radius, (255, 0, 0), 2)
+            #     cv2.putText(median, str(center[1]), (center[0] + 10, center[1] + 10),
+            #                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)    
         print(circles)
 
 if __name__ == "__main__":

@@ -24,8 +24,7 @@ class ObjectDetection():
         self.vt = VelocityTracker(OrderedDict())
         self.pt = ProcessItem()
         self.capture = cv2.VideoCapture(0)
-        self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        
 
         fps = self.capture.get(cv2.CAP_PROP_FPS)
         self.wait_time = 1000 / fps
@@ -36,7 +35,7 @@ class ObjectDetection():
     
     def Process(self):
         ret, frame = self.capture.read()
-        frame = cv2.resize(frame, (640, 360))
+        # frame = cv2.resize(frame, (640, 360))
         frame_copy = frame.copy()
         results = self.tfnet.return_predict(frame)
         rects = []
@@ -78,6 +77,9 @@ class ObjectDetection():
         #     cv2.circle(frame_copy, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
         return frame, cx, cy, crop
 
+    def Get_Frame(self):
+        ret, last_frame = self.capture.read()
+        return last_frame
 if __name__ == '__main__':
     od = ObjectDetection()
     while True:
