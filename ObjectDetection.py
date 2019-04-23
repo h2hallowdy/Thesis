@@ -80,6 +80,7 @@ class ObjectDetection():
     def Get_Frame(self):
         ret, last_frame = self.capture.read()
         return last_frame
+    
 if __name__ == '__main__':
     od = ObjectDetection()
     while True:

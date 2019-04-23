@@ -5,14 +5,16 @@ import time
 
 options = {
 	'model': 'cfg/tiny-yolo-voc-1c.cfg',
-	'load': 4200,
-	'threshold': 0.1,
+	'load': 9750,
+	'threshold': 0.4,
 	'gpu': 0.8
 }
 
 tfnet = TFNet(options)
 
 capture = cv2.VideoCapture('test_video.mp4')
+capture.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
 colors = [tuple(255 * np.random.rand(3)) for i in range(5)]
 

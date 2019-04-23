@@ -12,6 +12,7 @@ import serial
 import array
 import logging
 import cv2
+import os
 from datetime import datetime
 from ObjectDetection import ObjectDetection
 from Camera import Camera
@@ -659,11 +660,13 @@ class Ui_MainControllerUI(object):
             self.updateTimerHoming.start(1)
             
         else:
-            last_frame = self.od.Get_Frame()
-            cv2.imwrite('LastFrame.jpg', last_frame)
-            self.GetHome(last_frame)
-            
+            path = 'Samples'
+            for i in range(0, 15):
+                last_frame = self.od.Get_Frame()
+                cv2.imwrite(os.path.join(path, 'frame' + str(i) + '.jpg'), last_frame)
+            # self.GetHome(last_frame)
             self.updateTimerHoming.stop()
+
     def ImageForHoming(self):
         frame = self.od.Get_Frame()
         height, width, channel = frame.shape
@@ -674,27 +677,9 @@ class Ui_MainControllerUI(object):
         self.liveVidFrame.setPixmap(qPixMap)
         self.updateTimerHoming.setInterval(3)   
     
-    def GetHome(self, img):
-        # img = cv2.resize(img, (640, 480))
-        median = cv2.medianBlur(img, 5)
-        cg = cv2.cvtColor(median, cv2.COLOR_BGR2GRAY)
+    def GetHome(self):
         
-        th = cv2.adaptiveThreshold(cg, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
-
-        circles = cv2.HoughCircles(cg, cv2.HOUGH_GRADIENT, 1, 20,
-                               param1=30, param2=20,
-                               minRadius=20, maxRadius=25)
-        if circles is not None:
-            circles = np.uint16(np.around(circles))
-            # for i in circles[0, :]:
-            #     center = (i[0], i[1])      
-            #     cv2.circle(median, center, 1, (0, 100, 100), 2)
-            #     # circle outline
-            #     radius = i[2]
-            #     cv2.circle(median, center, radius, (255, 0, 0), 2)
-            #     cv2.putText(median, str(center[1]), (center[0] + 10, center[1] + 10),
-            #                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)    
-        print(circles)
+        
 
 if __name__ == "__main__":
     import sys

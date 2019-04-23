@@ -32,17 +32,32 @@ Y_ERROR = 20
 options = {
 	'model': 'cfg/tiny-yolo-voc-1c.cfg',
 	'load': 9750,
-	'threshold': 0.4,
-	'gpu': 0.8
+	'threshold': 0.2,
+	'gpu': 1
 }
 
 tfnet = TFNet(options)
 
 colors = [tuple(255 * np.random.rand(3)) for i in range(5)]
 # Image classification
-img = cv2.imread('146.jpg', cv2.IMREAD_COLOR)
-img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+img = cv2.imread('0.png', cv2.IMREAD_COLOR)
+img = cv2.resize(img, (640, 360))
+# img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 result = tfnet.return_predict(img)
+print(result)
+for idx, res in enumerate(result):
+	tl = (res['topleft']['x'], res['topleft']['y'])
+	br = (res['bottomright']['x'], res['bottomright']['y'])
+
+	label = res['label']
+	confidence = res['confidence']
+	text = '{}: {:.0f}%'.format(label, confidence * 100)
+		
+	if confidence > 0.70:
+		img = cv2.rectangle(img, tl, br, (0, 255, 0), 2)
+		img = cv2.putText(img, text, tl, cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 2)
+			################ Image processing #############################################
+cv2.imshow('haha', img)
 tl = (result[0]['topleft']['x'], result[0]['topleft']['y'])
 br = (result[0]['bottomright']['x'], result[0]['bottomright']['y'])
 label = result[0]['label']
@@ -72,23 +87,25 @@ while True:
 	cv2.imshow("Thresh hold", closing)
 	if cv2.waitKey(10) == ord('q'):
 		break
-im2, contours, hierarchy = cv2.findContours(erosion, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-# for c in contours:
-#     # compute the center of the contour
-#     M = cv2.moments(c)
-#     if M['m00'] != 0:
-#         cX = int(M['m10'] / M['m00'])
-#         cY = int(M['m01'] / M['m00'])
-#         cv2.circle(imcrop, (cX, cY), 4, (0, 0, 255), -1)
-#         cv2.putText(imcrop, "center", (cX - 20, cY - 20),
-#                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+im2, contours, hierarchy = cv2.findContours(erosion, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+for c in contours:
+    # compute the center of the contour
+    # M = cv2.moments(c)
+    # if M['m00'] != 0:
+    #     cX = int(M['m10'] / M['m00'])
+    #     cY = int(M['m01'] / M['m00'])
+    #     cv2.circle(imcrop, (cX, cY), 4, (0, 0, 255), -1)
+    #     cv2.putText(imcrop, "center", (cX - 20, cY - 20),
+    #                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
-#     # draw the contour and center of the shape on the image
-#     cv2.drawContours(imcrop, [c], -1, (0, 255, 0), 2)
-# cv2.imshow('imcrop', imcrop)
+    # # draw the contour and center of the shape on the image
+    # cv2.drawContours(imcrop, [c], -1, (0, 255, 0), 2)
+	approx = cv2.approxPolyDP(c,0.01*cv2.arcLength(c,True),True)
+	print(len(approx))
+cv2.imshow('imcrop', imcrop)
 
 # Determine angle
-c = contours[0]
+c = max(contours, key = cv2.contourArea)
 rect = cv2.minAreaRect(c)
 box = cv2.boxPoints(rect)
 box = np.int0(box)

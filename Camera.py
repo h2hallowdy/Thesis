@@ -8,6 +8,7 @@ class Camera:
     
     def initialize(self):
         self.cap = cv2.VideoCapture(self.cam_num)
+        
 
     def get_frame(self):
         ret, self.last_frame = self.cap.read()
