@@ -16,6 +16,7 @@ import os
 from datetime import datetime
 from ObjectDetection import ObjectDetection
 from Camera import Camera
+from Calibration import *
 
 # logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
 # logging.debug('This message should go to the log file')
@@ -45,7 +46,23 @@ class Ui_MainControllerUI(object):
         logging.basicConfig(filename=self.FILE_LOG, level=logging.INFO)
         t_log = GetTime()
         logging.info(t_log + ': Initialize the software...Connected')
-        
+        self.count = 0
+        self.sumX = 0
+        self.sumY = 0
+        self.sumAngle = 0
+        try:
+            with np.load('Calib.npz') as X:
+                self.mtx, self.dist, self.rvects, self.tvects, self.corners = [X[i] for i in ('mtx','dist','rvecs','tvecs', 'corners')]
+                print(self.mtx)
+           
+            self.rodrigues_Vecs = InverseRodrigues(self.rvects)
+            translate = np.reshape(self.tvects, (3, 1))
+            K = np.concatenate((self.rodrigues_Vecs, translate), axis=1)
+            a = self.mtx.dot(K).dot(np.array([[1, 1, 1, 1]]).T)
+            self.s = a.item(2)
+            print(self.s)
+        except:
+            print('error occured')
 
     def setupUi(self, MainControllerUI):
         MainControllerUI.setObjectName("MainControllerUI")
@@ -494,8 +511,6 @@ class Ui_MainControllerUI(object):
         msg.setWindowTitle(title)
         msg.exec_()
 
-
-    
     def read_data(self):
         if self.state == True:
             buf = self.ser.read(self.ser.inWaiting())
@@ -515,13 +530,17 @@ class Ui_MainControllerUI(object):
             self.xCurLbl.setText(arrayCoordinates[0])
             self.yCurLbl.setText(arrayCoordinates[1])
             self.zCurLbl.setText(arrayCoordinates[2])
+            print(arrayCoordinates[3])
             if arrayCoordinates[3] == 'd':
                 self.stateProcess = False
+                self.count = 0
+                self.sumX = 0
+                self.sumY = 0
+                self.sumAngle = 0
             else:
                 self.stateProcess = True 
         self.timer.setInterval(300)
         # return buf
-
 
     ########################################################################################
     #                                                                                      #
@@ -557,7 +576,7 @@ class Ui_MainControllerUI(object):
             self.updateTimer.stop()
         
     def update_Image(self):
-        frame, cx, cy, _ = self.od.Process()
+        frame, cx, cy, angle = self.od.Process()
         height, width, channel = frame.shape
         bytesPerLine = 3 * width
         qImg = QtGui.QImage(frame.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888).rgbSwapped()
@@ -565,17 +584,31 @@ class Ui_MainControllerUI(object):
         qPixMap = qPixMap.scaled(self.liveVidFrame.width(), self.liveVidFrame.height(),QtCore.Qt.KeepAspectRatio)
         self.liveVidFrame.setPixmap(qPixMap)
         
-        pointX = (425 - cx) * 30 / 200
-        pointY = (cy * 30 / 196) - 5.8
-        _x = int(pointX)
-        _dotX = int((pointX - _x) * 100)
-        _y = int(pointY)
-        _dotY = int((pointY - _y) * 100)
-        self.xProLbl.setText(str(pointX))
-        self.yProLbl.setText(str(pointY))
-        if self.state == True and self.stateProcess == False:
+        points = np.array([[cx, cy, 1]]).T
+        realPoints = ImgPoints2RealPoints(self.mtx, self.rodrigues_Vecs, self.tvects, points, self.s)
+        _x, _y = realPoints.item(0), realPoints.item(1)
+        # print(_x, _y)
+        pointX = _x * 2.45 - 34.5
+        pointY = _y * 2.45 + 0.5
+        
+        self.sumX += pointX
+        self.sumY += pointY
+        _angle = angle * 180.0 / 3.14
+        # print(pointX, pointY, _angle)
+        self.sumAngle += _angle
+        self.count += 1
+        
+        if self.state == True and self.stateProcess == False and self.count == 9:
+            self.count = 0
+            aveX = self.sumX / 10.0
+            aveY = self.sumY / 10.0
+            aveA = self.sumAngle / 10.0
+            self.sumX = 0
+            self.sumY = 0
+            self.sumAngle = 0
             self.stateProcess = True
-            message = 'g-1' + '{:02d}'.format(_x) + '{:02d}'.format(_dotX) + '-0' + '{:02d}'.format(_y) + '{:02d}'.format(_dotY) + '-0000000' 
+            message = 'haha'
+            # message = 'g-1' + '{:02d}'.format(x) + '{:02d}'.format(dotX) + '-0' + '{:02d}'.format(y) + '{:02d}'.format(dotY) + '-0000000' 
             message_bytes = bytes(message, encoding='utf-8')
             self.ser.write(message_bytes)
         self.updateTimer.setInterval(4)
@@ -664,7 +697,7 @@ class Ui_MainControllerUI(object):
             for i in range(0, 15):
                 last_frame = self.od.Get_Frame()
                 cv2.imwrite(os.path.join(path, 'frame' + str(i) + '.jpg'), last_frame)
-            # self.GetHome(last_frame)
+            self.GetHome()
             self.updateTimerHoming.stop()
 
     def ImageForHoming(self):
@@ -678,7 +711,9 @@ class Ui_MainControllerUI(object):
         self.updateTimerHoming.setInterval(3)   
     
     def GetHome(self):
-        
+        GetCalibrationParams()
+        # UsingParams(np.array([[183, 285, 1]]).T)
+
         
 
 if __name__ == "__main__":

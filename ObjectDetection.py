@@ -60,9 +60,10 @@ class ObjectDetection():
         self.vt.update(objects)
         self.vt.velocityChange()
         if crop is not None:
-            print(cx, cy, angle)
+            return frame, cx, cy, angle
         else:
             pass
+        #region: Do later
         # for displaying
         # for (objectID, centroid) in objects.items():
         #     velocity = self.vt.velocity[objectID]
@@ -75,7 +76,8 @@ class ObjectDetection():
         #     cv2.putText(frame_copy, textVelocity, (centroid[0] + 10, centroid[1] + 10),
         #         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
         #     cv2.circle(frame_copy, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
-        return frame, cx, cy, crop
+        #endregion
+        # return frame, cx, cy, crop
 
     def Get_Frame(self):
         ret, last_frame = self.capture.read()

@@ -19,7 +19,8 @@ class ProcessItem():
         return self.processObject
     
     def updateAngle(self, img):
-        if self.processObject != None:    
+        if self.processObject != None:
+                
             #region: Normal IP to get real rectangle
             # destructuring the object
             (startX, startY, endX, endY) = self.processObject
@@ -36,11 +37,12 @@ class ProcessItem():
             median = cv2.medianBlur(th, 7)
             median = 255 - median
             # myThresh = 255 - thresh
-            # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
             # erosion = cv2.erode(myThresh, kernel)
-            # dilation = cv2.dilate(erosion, kernel)
+            dilation = cv2.dilate(median, kernel)
+            cv2.imshow('dilation',dilation)
             # cv2.imshow('erosion', dilation)
-            _, contours, _ = cv2.findContours(median, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            _, contours, _ = cv2.findContours(dilation, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             c = max(contours, key = cv2.contourArea)
             rect = cv2.minAreaRect(c)
             box = cv2.boxPoints(rect)
@@ -48,9 +50,10 @@ class ProcessItem():
             # cv2.drawContours(crop, [box],0,(0,0,255),1)
             #endregion
 
+            cv2.imwrite('crop.jpg', crop)
             #region: Calculate direction of product
             cropAngle = self.BlueFilter(crop)
-            cv2.imshow('haha',cropAngle)
+            cv2.imshow('haha',crop)
             aw, ah = cropAngle.shape[1], cropAngle.shape[0]
 
             myLength1 = self.calculation(box[0], box[1])
@@ -95,6 +98,7 @@ class ProcessItem():
                 else:
                     dau = cen2
                     dit = cen1
+            # print(dau, dit)
             #endregion
 
             #region: Calculate angle
@@ -124,13 +128,13 @@ class ProcessItem():
 
     def BlueFilter(self, img):
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        lower_blue = np.array([110,50,50])
-        upper_blue = np.array([130,255,255])
+        lower_blue = np.array([60,180,30], dtype=np.uint8)
+        upper_blue = np.array([118,255,255], dtype=np.uint8)
         mask = cv2.inRange(hsv, lower_blue, upper_blue)
         res = cv2.bitwise_and(img, img, mask = mask)
         n = cv2.cvtColor(res, cv2.COLOR_HSV2BGR)
         resg = cv2.cvtColor(n, cv2.COLOR_BGR2GRAY)
-        return resg
+        return mask
 
     def calculation(self, x1, x2):
         dx = x1[0] - x2[0]
@@ -139,18 +143,6 @@ class ProcessItem():
         return length
 
 if __name__ == '__main__':
-    crop = cv2.imread('crop.jpg')
-    cropGray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
-    # equ = cv2.equalizeHist(cropGray)
-    # blur = cv2.GaussianBlur(equ, (5, 5), 0)
-    ret, thresh = cv2.threshold(cropGray, 102, 255, 0)
-    cv2.imshow('thresh', thresh)
-    myThresh = 255 - thresh
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    erosion = cv2.erode(myThresh, kernel)
-    cv2.imshow('erosion', erosion)
-    _, contours, _ = cv2.findContours(erosion, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    c = max(contours, key = cv2.contourArea)
-    cv2.waitKey(0)
+    print('haha')
     
 
