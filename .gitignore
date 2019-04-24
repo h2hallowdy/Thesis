@@ -46,3 +46,6 @@ ckpt/*
 .cache/
 
 *.log
+
+*.jpg
+*.png
