@@ -1,3 +1,12 @@
+#----------------------------------------------------------------------------------------------
+# Name:             Calibration Camera
+# Purpose:          Calibrate camera by extrinsic, intrinsic and camera mtx
+# Author:           NXH
+# Created:          Wednesday April 24
+# Input:            Samples images at ./Samples/*.jpg
+# Output:           cam mtx, distortion, rotation/ translation vecs, corners = reference points
+#-----------------------------------------------------------------------------------------------
+
 import numpy as np
 import cv2
 import glob

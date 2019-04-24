@@ -1,10 +1,11 @@
 
-
+#region: Import all modules neccessary
 from PyQt5 import QtCore, QtGui, QtWidgets, QtOpenGL
 from main import Ui_MainWindow
 from Configuration import Ui_ConfigurationUI
 from ManualMode import Ui_ManualMode
 from time_util import *
+from numbers_util import *
 import threading
 import numpy as np
 import time
@@ -17,12 +18,10 @@ from datetime import datetime
 from ObjectDetection import ObjectDetection
 from Camera import Camera
 from Calibration import *
-
-# logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
-# logging.debug('This message should go to the log file')
-
+#endregion
 
 class Ui_MainControllerUI(object):
+    stateCollect = False
     state = False
     event = threading.Event()
     stateLiveView = False
@@ -50,6 +49,14 @@ class Ui_MainControllerUI(object):
         self.sumX = 0
         self.sumY = 0
         self.sumAngle = 0
+        self.positionDictionary = {
+            '1': [10, 20, 90],
+            '2': [10, 23, 90],
+            '3': [10, 26, 90],
+            '4': [10, 29, 90],
+            '5': [10, 32, 90],
+            '6': [10, 35, 90],
+        }
         try:
             with np.load('Calib.npz') as X:
                 self.mtx, self.dist, self.rvects, self.tvects, self.corners = [X[i] for i in ('mtx','dist','rvecs','tvecs', 'corners')]
@@ -370,8 +377,6 @@ class Ui_MainControllerUI(object):
         self.autoBtn.clicked.connect(self.autoMode)
         self.camHomeBtn.clicked.connect(self.CamHoming)
         
-
-
     def retranslateUi(self, MainControllerUI):
         _translate = QtCore.QCoreApplication.translate
         MainControllerUI.setWindowTitle(_translate("MainControllerUI", "Main Controller-MC"))
@@ -468,8 +473,7 @@ class Ui_MainControllerUI(object):
     def closeEvent(self, *arg):
         self.ser = Ui_ConfigurationUI.ser
         self.SetState(Ui_ConfigurationUI.state)
-        
-        
+           
     ''' Open Configuration Ui '''
     def openCongiguration(self):
         self.window = QtWidgets.QMainWindow()
@@ -532,6 +536,7 @@ class Ui_MainControllerUI(object):
             self.zCurLbl.setText(arrayCoordinates[2])
             print(arrayCoordinates[3])
             if arrayCoordinates[3] == 'd':
+                
                 self.stateProcess = False
                 self.count = 0
                 self.sumX = 0
@@ -594,7 +599,7 @@ class Ui_MainControllerUI(object):
         self.sumX += pointX
         self.sumY += pointY
         _angle = angle * 180.0 / 3.14
-        # print(pointX, pointY, _angle)
+        print(_angle)
         self.sumAngle += _angle
         self.count += 1
         
@@ -607,8 +612,7 @@ class Ui_MainControllerUI(object):
             self.sumY = 0
             self.sumAngle = 0
             self.stateProcess = True
-            message = 'haha'
-            # message = 'g-1' + '{:02d}'.format(x) + '{:02d}'.format(dotX) + '-0' + '{:02d}'.format(y) + '{:02d}'.format(dotY) + '-0000000' 
+            message = UARTMessage(aveX, aveY, aveA, 'g')
             message_bytes = bytes(message, encoding='utf-8')
             self.ser.write(message_bytes)
         self.updateTimer.setInterval(4)
@@ -720,11 +724,6 @@ if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
     MainControllerUI = QtWidgets.QMainWindow()
-    # import file from another dir
-    # sys.path.insert(0, './Models/')
-    # from Camera import Camera
-    # camera = Camera(0)
-    # import file from another dir
     ui = Ui_MainControllerUI()
     ui.setupUi(MainControllerUI)
     MainControllerUI.show()

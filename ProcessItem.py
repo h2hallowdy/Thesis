@@ -33,16 +33,18 @@ class ProcessItem():
             _new_cenY = h / 2.0
             cropGray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
             # ret, thresh = cv2.threshold(cropGray, 102, 255, 0)
-            th = cv2.adaptiveThreshold(cropGray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, 2)
-            median = cv2.medianBlur(th, 7)
-            median = 255 - median
-            # myThresh = 255 - thresh
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-            # erosion = cv2.erode(myThresh, kernel)
-            dilation = cv2.dilate(median, kernel)
-            cv2.imshow('dilation',dilation)
+            # th = cv2.adaptiveThreshold(cropGray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, 2)
+            th = cv2.adaptiveThreshold(cropGray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 337, 44)
+            # median = cv2.medianBlur(th, 7)
+            # median = 255 - median
+            # # myThresh = 255 - thresh
+            # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+            # # erosion = cv2.erode(myThresh, kernel)
+            # dilation = cv2.dilate(median, kernel)
+            myThresh = 255 - th
+            cv2.imshow('dilation',myThresh)
             # cv2.imshow('erosion', dilation)
-            _, contours, _ = cv2.findContours(dilation, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            _, contours, _ = cv2.findContours(myThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             c = max(contours, key = cv2.contourArea)
             rect = cv2.minAreaRect(c)
             box = cv2.boxPoints(rect)
@@ -53,6 +55,7 @@ class ProcessItem():
             cv2.imwrite('crop.jpg', crop)
             #region: Calculate direction of product
             cropAngle = self.BlueFilter(crop)
+            cv2.imshow('cropAngle', cropAngle)
             cv2.imshow('haha',crop)
             aw, ah = cropAngle.shape[1], cropAngle.shape[0]
 
@@ -98,7 +101,7 @@ class ProcessItem():
                 else:
                     dau = cen2
                     dit = cen1
-            # print(dau, dit)
+            print(dau, dit)
             #endregion
 
             #region: Calculate angle
