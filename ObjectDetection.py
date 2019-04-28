@@ -52,10 +52,11 @@ class ObjectDetection():
                 rects.append((startX, startY, endX, endY))
 
                 # frame = cv2.rectangle(frame, tl, br, (0, 255, 0), 2)    
-        self.pt.updateObject(rects)
+        objects = self.ct.update(rects)
+        self.pt.updateObject(rects, objects)
         (crop, angle, cx, cy) = self.pt.updateAngle(frame)
         
-        objects = self.ct.update(rects)
+        
 
         self.vt.update(objects)
         self.vt.velocityChange()

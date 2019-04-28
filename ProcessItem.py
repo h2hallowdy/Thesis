@@ -3,6 +3,13 @@ from collections import OrderedDict
 import numpy as np
 import math
 
+def first(s):
+    '''Return the first element from an ordered collection
+       or an arbitrary element from an unordered collection.
+       Raise StopIteration if the collection is empty.
+    '''
+    return next(iter(s))
+
 class ProcessItem():
     def __init__(self, error=20):
         self.error = error
@@ -10,12 +17,20 @@ class ProcessItem():
         self.rects = []
         self.processObject = None
     
-    def updateObject(self, rects):
+    def updateObject(self, rects, listObjects):
+        self.distance = []
         self.rects = rects
+        self.listRects = listObjects
+        firstItem = self.listRects[first(self.listRects)]
         if len(self.rects) == 0:
             self.processObject = None
         else:
-            self.processObject = self.rects[0]
+            for rect in self.rects:
+                (startX, startY, endX, endY) = rect   
+                [temp_cx, temp_cy] = [(startX + endX) / 2.0, (startY + endY) / 2.0] 
+                self.distance.append(self.calculation(firstItem, [temp_cx, temp_cy]))
+            min_index = np.argmin(self.distance)
+            self.processObject = self.rects[min_index]
         return self.processObject
     
     def updateAngle(self, img):
@@ -58,7 +73,7 @@ class ProcessItem():
             cAngle = max(contoursAngle, key = cv2.contourArea)
             rectAngle = cv2.minAreaRect(cAngle)
             tam = rectAngle[0]
-            print(tam)
+            # print(tam)
 
             cv2.imshow('cropAngle', cropAngle)
             cv2.imshow('haha',crop)
@@ -119,7 +134,7 @@ class ProcessItem():
                 angle = math.acos(cos)
             elif dau[1] < dau[0]:
                 angle = -math.acos(cos)
-            print(angle)
+            # print(angle)
             #endregion
 
             # Return real world center of product.
