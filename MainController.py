@@ -535,8 +535,17 @@ class Ui_MainControllerUI(object):
             self.yCurLbl.setText(arrayCoordinates[1])
             self.zCurLbl.setText(arrayCoordinates[2])
             print(arrayCoordinates[3])
-            if arrayCoordinates[3] == 'd':
-                
+            print(arrayCoordinates[4])
+            if arrayCoordinates[3] == 'c':
+                for index in self.positionDictionary:
+                    if arrayCoordinates[4] == index:
+                        nextPoints = self.positionDictionary[index]
+                nextX, nextY, nextAngle = nextPoints[0], nextPoints[1], nextPoints[2]
+                mess = UARTMessage(nextX, nextY, nextAngle, 'r')
+                mess_bytes = bytes(mess, encoding='utf-8')
+                self.ser.write(mess_bytes)
+
+            elif arrayCoordinates[3] == 'd':
                 self.stateProcess = False
                 self.count = 0
                 self.sumX = 0
@@ -581,41 +590,54 @@ class Ui_MainControllerUI(object):
             self.updateTimer.stop()
         
     def update_Image(self):
-        frame, cx, cy, angle = self.od.Process()
-        height, width, channel = frame.shape
-        bytesPerLine = 3 * width
-        qImg = QtGui.QImage(frame.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888).rgbSwapped()
-        qPixMap = QtGui.QPixmap(qImg)
-        qPixMap = qPixMap.scaled(self.liveVidFrame.width(), self.liveVidFrame.height(),QtCore.Qt.KeepAspectRatio)
-        self.liveVidFrame.setPixmap(qPixMap)
-        
-        points = np.array([[cx, cy, 1]]).T
-        realPoints = ImgPoints2RealPoints(self.mtx, self.rodrigues_Vecs, self.tvects, points, self.s)
-        _x, _y = realPoints.item(0), realPoints.item(1)
-        # print(_x, _y)
-        pointX = _x * 2.45 - 34.5
-        pointY = _y * 2.45 + 0.5
-        
-        self.sumX += pointX
-        self.sumY += pointY
-        _angle = angle * 180.0 / 3.14
-        print(_angle)
-        self.sumAngle += _angle
-        self.count += 1
-        
-        if self.state == True and self.stateProcess == False and self.count == 9:
-            self.count = 0
-            aveX = self.sumX / 10.0
-            aveY = self.sumY / 10.0
-            aveA = self.sumAngle / 10.0
-            self.sumX = 0
-            self.sumY = 0
-            self.sumAngle = 0
-            self.stateProcess = True
-            message = UARTMessage(aveX, aveY, aveA, 'g')
-            message_bytes = bytes(message, encoding='utf-8')
-            self.ser.write(message_bytes)
-        self.updateTimer.setInterval(4)
+        try:
+            frame, cx, cy, angle = self.od.Process()
+            height, width, channel = frame.shape
+            bytesPerLine = 3 * width
+            qImg = QtGui.QImage(frame.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888).rgbSwapped()
+            qPixMap = QtGui.QPixmap(qImg)
+            qPixMap = qPixMap.scaled(self.liveVidFrame.width(), self.liveVidFrame.height(),QtCore.Qt.KeepAspectRatio)
+            self.liveVidFrame.setPixmap(qPixMap)
+            
+            points = np.array([[cx, cy, 1]]).T
+            realPoints = ImgPoints2RealPoints(self.mtx, self.rodrigues_Vecs, self.tvects, points, self.s)
+            _x, _y = realPoints.item(0), realPoints.item(1)
+            # print(_x, _y)
+            _angle = angle * 180.0 / 3.14159
+            pointX = _x * 2.45 - 35.2 + 2
+            pointY = _y * 2.45 + 1 
+            
+            self.sumX += pointX
+            self.sumY += pointY
+            self.sumAngle += _angle
+            self.count += 1
+            
+            if self.state == True and self.stateProcess == False and self.count == 10:
+                print('---------------------')
+                self.count = 0
+                aveA = self.sumAngle / 10.0
+                # + 0.2 * math.cos(aveA * 3.14159 / 180.0)
+                aveX = self.sumX / 10.0 
+                aveY = self.sumY / 10.0
+                
+                self.sumX = 0
+                self.sumY = 0
+                self.sumAngle = 0
+                self.stateProcess = True
+                message = UARTMessage(aveX, aveY, aveA, 'c')
+                message_bytes = bytes(message, encoding='utf-8')
+                self.ser.write(message_bytes)
+            self.updateTimer.setInterval(4)
+        except:
+            frame = self.od.Get_Frame()
+            height, width, channel = frame.shape
+            bytesPerLine = 3 * width
+            qImg = QtGui.QImage(frame.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888).rgbSwapped()
+            qPixMap = QtGui.QPixmap(qImg)
+            qPixMap = qPixMap.scaled(self.liveVidFrame.width(), self.liveVidFrame.height(),QtCore.Qt.KeepAspectRatio)
+            self.liveVidFrame.setPixmap(qPixMap)
+            self.updateTimer.setInterval(4)
+
 
     ########################################################################################
     #                                                                                      #

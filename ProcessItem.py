@@ -32,8 +32,7 @@ class ProcessItem():
             _new_cenX = w / 2.0
             _new_cenY = h / 2.0
             cropGray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
-            # ret, thresh = cv2.threshold(cropGray, 102, 255, 0)
-            # th = cv2.adaptiveThreshold(cropGray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, 2)
+            
             th = cv2.adaptiveThreshold(cropGray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 337, 44)
             # median = cv2.medianBlur(th, 7)
             # median = 255 - median
@@ -55,12 +54,20 @@ class ProcessItem():
             cv2.imwrite('crop.jpg', crop)
             #region: Calculate direction of product
             cropAngle = self.BlueFilter(crop)
+            _, contoursAngle, _ = cv2.findContours(cropAngle, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            cAngle = max(contoursAngle, key = cv2.contourArea)
+            rectAngle = cv2.minAreaRect(cAngle)
+            tam = rectAngle[0]
+            print(tam)
+
             cv2.imshow('cropAngle', cropAngle)
             cv2.imshow('haha',crop)
             aw, ah = cropAngle.shape[1], cropAngle.shape[0]
 
             myLength1 = self.calculation(box[0], box[1])
             myLength2 = self.calculation(box[1], box[2])
+
+            # determine width and height
             if myLength1 < myLength2:
                 vtcp = box[0] - box[1]
                 vtcp[1] = -vtcp[1]
@@ -75,33 +82,26 @@ class ProcessItem():
                 cen2 = (box[2] + box[1]) / 2
             _cx, _cy = rect[0]
             # ax + by + c = 0 => c = -ax - by
-            c = -vtpt[0] * _cx - vtpt[1] * _cy
-            sum1 = 0
-            sum2 = 0
-            for x in range(0, w):
-                for y in range(0, h):
-                    if vtpt[0] * x + vtpt[1] * y + c > 0:
-                        sum1 += int(cropAngle[y, x])
-                    else:
-                        sum2 += int(cropAngle[y, x])
+            # c = -vtpt[0] * _cx - vtpt[1] * _cy
+            # sum1 = 0
+            # sum2 = 0
+            # for x in range(0, w):
+            #     for y in range(0, h):
+            #         if vtpt[0] * x + vtpt[1] * y + c > 0:
+            #             sum1 += int(cropAngle[y, x])
+            #         else:
+            #             sum2 += int(cropAngle[y, x])
             
-            # cen1 = np.ndarray(shape=(1, 2))
-            # cen2 = np.ndarray(shape=(1, 2))
-            if sum1 >= sum2: #head in sum1
-                if vtpt[0] * cen1[0] + vtpt[1] * cen1[1] + c > 0:
-                    dau = cen1
-                    dit = cen2
-                else:
-                    dau = cen2
-                    dit = cen1
-            elif sum2 > sum1: #head in sum2
-                if vtpt[0] * cen1[0] + vtpt[1] * cen1[1] + c < 0:
-                    dau = cen1
-                    dit = cen2
-                else:
-                    dau = cen2
-                    dit = cen1
-            print(dau, dit)
+
+            dodai1 = self.calculation(cen1, tam)
+            dodai2 = self.calculation(cen2, tam)
+            if dodai1 > dodai2:
+                dau = cen2
+                dit = cen1
+            else:
+                dau = cen1
+                dit = cen2
+            
             #endregion
 
             #region: Calculate angle
@@ -113,11 +113,13 @@ class ProcessItem():
             d2 = math.sqrt(v2[0]*v2[0] + v2[1]*v2[1])
             cos = v_dot / (d1*d2)
             
+            print(dau, dit)
             # Positive
-            if dau[1] >= dau[0]:
+            if dau[1] >= dit[1]:
                 angle = math.acos(cos)
-            else:
+            elif dau[1] < dau[0]:
                 angle = -math.acos(cos)
+            print(angle)
             #endregion
 
             # Return real world center of product.

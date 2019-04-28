@@ -40,7 +40,7 @@ def UARTMessage(aveX, aveY, aveAng, mode):
     else:
         aveAng = -aveAng
         intA, pointA = SplitNumber(aveAng, 1)
-        message += '0' + '{:03d}'.format(intA) + '{:01d}'.format(pointA) + '-00'
+        message += '1' + '{:03d}'.format(intA) + '{:01d}'.format(pointA) + '-00'
     #endregion
 
     return message
