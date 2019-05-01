@@ -49,12 +49,6 @@ class ProcessItem():
             cropGray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
             
             th = cv2.adaptiveThreshold(cropGray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 337, 44)
-            # median = cv2.medianBlur(th, 7)
-            # median = 255 - median
-            # # myThresh = 255 - thresh
-            # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-            # # erosion = cv2.erode(myThresh, kernel)
-            # dilation = cv2.dilate(median, kernel)
             myThresh = 255 - th
             cv2.imshow('dilation',myThresh)
             # cv2.imshow('erosion', dilation)
@@ -96,16 +90,7 @@ class ProcessItem():
                 cen1 = (box[0] + box[3]) / 2
                 cen2 = (box[2] + box[1]) / 2
             _cx, _cy = rect[0]
-            # ax + by + c = 0 => c = -ax - by
-            # c = -vtpt[0] * _cx - vtpt[1] * _cy
-            # sum1 = 0
-            # sum2 = 0
-            # for x in range(0, w):
-            #     for y in range(0, h):
-            #         if vtpt[0] * x + vtpt[1] * y + c > 0:
-            #             sum1 += int(cropAngle[y, x])
-            #         else:
-            #             sum2 += int(cropAngle[y, x])
+            
             
 
             dodai1 = self.calculation(cen1, tam)

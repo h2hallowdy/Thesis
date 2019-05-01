@@ -53,11 +53,9 @@ class ObjectDetection():
 
                 # frame = cv2.rectangle(frame, tl, br, (0, 255, 0), 2)    
         objects = self.ct.update(rects)
+        
         self.pt.updateObject(rects, objects)
         (crop, angle, cx, cy) = self.pt.updateAngle(frame)
-        
-        
-
         self.vt.update(objects)
         self.vt.velocityChange()
         if crop is not None:

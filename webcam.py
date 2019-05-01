@@ -35,7 +35,7 @@ ct = CentroidTracker()
 vt = VelocityTracker(OrderedDict())
 pt = ProcessItem()
 
-capture = cv2.VideoCapture('New video_Medium.mp4')
+capture = cv2.VideoCapture('haha_Medium (2).mp4')
 
 
 fps = capture.get(cv2.CAP_PROP_FPS)
@@ -74,13 +74,14 @@ while True:
 			rects.append((startX, startY, endX, endY))
 
 			frame_copy = cv2.rectangle(frame_copy, tl, br, (0, 255, 0), 2)
-	objects = ct.update(rects)		
+	objects = ct.update(rects)	
+	print(len(objects))	
 	pt.updateObject(rects, objects)
 	(crop, angle, cx, cy) = pt.updateAngle(frame)
 	if crop is not None:
 		cv2.imshow('Process Item', crop)
 		# cv2.circle(crop, (cx, cy), 2, (0, 255, 0), -1)
-		print(cx, cy)
+		# print(cx, cy)
 	else:
 		pass
 	
