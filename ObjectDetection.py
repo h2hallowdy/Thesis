@@ -14,7 +14,7 @@ class ObjectDetection():
         options = {
             'model': 'cfg/tiny-yolo-voc-1c.cfg',
             'load': 9750,
-            'threshold': 0.2,
+            'threshold': 0.3,
             'gpu': 1
         }
         self.tfnet = TFNet(options)
@@ -48,12 +48,12 @@ class ObjectDetection():
             confidence = result['confidence']
             text = '{}: {:.0f}%'.format(label, confidence * 100)
             (startX, startY, endX, endY) = (result['topleft']['x'], result['topleft']['y'], result['bottomright']['x'], result['bottomright']['y'])
-            if confidence > 0.70 and ((startX + endX) / 2) < 300:
+            if confidence > 0.85 and ((startX + endX) / 2) < 300:
                 rects.append((startX, startY, endX, endY))
 
                 # frame = cv2.rectangle(frame, tl, br, (0, 255, 0), 2)    
         objects = self.ct.update(rects)
-        
+        print(len(objects))
         self.pt.updateObject(rects, objects)
         (crop, angle, cx, cy) = self.pt.updateAngle(frame)
         self.vt.update(objects)

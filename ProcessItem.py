@@ -113,7 +113,7 @@ class ProcessItem():
             d2 = math.sqrt(v2[0]*v2[0] + v2[1]*v2[1])
             cos = v_dot / (d1*d2)
             
-            print(dau, dit)
+            # print(dau, dit)
             # Positive
             if dau[1] >= dit[1]:
                 angle = math.acos(cos)

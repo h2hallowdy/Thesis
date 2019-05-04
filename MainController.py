@@ -57,6 +57,7 @@ class Ui_MainControllerUI(object):
             '5': [10, 32, 90],
             '6': [10, 35, 90],
         }
+        self.objectCounting = 0
         try:
             with np.load('Calib.npz') as X:
                 self.mtx, self.dist, self.rvects, self.tvects, self.corners = [X[i] for i in ('mtx','dist','rvecs','tvecs', 'corners')]
@@ -546,6 +547,9 @@ class Ui_MainControllerUI(object):
                 self.ser.write(mess_bytes)
 
             elif arrayCoordinates[3] == 'd':
+                logging.basicConfig(filename=self.FILE_LOG, level=logging.INFO)
+                t_log = GetTime()
+                logging.info(t_log + ': Object number ' + str(self.objectCounting) + ' done.')
                 self.stateProcess = False
                 self.count = 0
                 self.sumX = 0
@@ -606,7 +610,7 @@ class Ui_MainControllerUI(object):
             _angle = angle * 180.0 / 3.14159
             pointX = _x * 2.45 - 35.2 + 2
             pointY = _y * 2.45 + 1 
-            
+            print(_angle)
             self.sumX += pointX
             self.sumY += pointY
             self.sumAngle += _angle
@@ -624,6 +628,10 @@ class Ui_MainControllerUI(object):
                 self.sumY = 0
                 self.sumAngle = 0
                 self.stateProcess = True
+                self.objectCounting += 1
+                logging.basicConfig(filename=self.FILE_LOG, level=logging.INFO)
+                t_log = GetTime()
+                logging.info(t_log + ': ' + 'Object number ' + str(self.objectCounting) + ' in progress.')
                 message = UARTMessage(aveX, aveY, aveA, 'c')
                 message_bytes = bytes(message, encoding='utf-8')
                 self.ser.write(message_bytes)

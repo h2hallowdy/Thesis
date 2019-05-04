@@ -22,7 +22,7 @@ def calculation(x1, x2):
 options = {
 	'model': 'cfg/tiny-yolo-voc-1c.cfg',
 	'load': 9750,
-	'threshold': 0.2,
+	'threshold': 0.3,
 	'gpu': 1
 }
 
@@ -35,7 +35,7 @@ ct = CentroidTracker()
 vt = VelocityTracker(OrderedDict())
 pt = ProcessItem()
 
-capture = cv2.VideoCapture('haha_Medium (2).mp4')
+capture = cv2.VideoCapture(0)
 
 
 fps = capture.get(cv2.CAP_PROP_FPS)
@@ -70,7 +70,7 @@ while True:
 		confidence = result['confidence']
 		text = '{}: {:.0f}%'.format(label, confidence * 100)
 		(startX, startY, endX, endY) = (result['topleft']['x'], result['topleft']['y'], result['bottomright']['x'], result['bottomright']['y'])
-		if confidence > 0.70:
+		if confidence > 0.85 and ((startX + endX) / 2) < 300:
 			rects.append((startX, startY, endX, endY))
 
 			frame_copy = cv2.rectangle(frame_copy, tl, br, (0, 255, 0), 2)
