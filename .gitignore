@@ -51,3 +51,4 @@ ckpt/*
 *.png
 *.mp4
 *.xml
+battery_model_data_bosung/

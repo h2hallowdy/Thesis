@@ -21,9 +21,9 @@ def calculation(x1, x2):
 
 options = {
 	'model': 'cfg/tiny-yolo-voc-1c.cfg',
-	'load': 9750,
+	'load': 12000,
 	'threshold': 0.3,
-	'gpu': 1
+	'gpu': 1.0
 }
 
 tfnet = TFNet(options)
@@ -35,7 +35,7 @@ ct = CentroidTracker()
 vt = VelocityTracker(OrderedDict())
 pt = ProcessItem()
 
-capture = cv2.VideoCapture(0)
+capture = cv2.VideoCapture('output.avi')
 
 
 fps = capture.get(cv2.CAP_PROP_FPS)
@@ -70,40 +70,41 @@ while True:
 		confidence = result['confidence']
 		text = '{}: {:.0f}%'.format(label, confidence * 100)
 		(startX, startY, endX, endY) = (result['topleft']['x'], result['topleft']['y'], result['bottomright']['x'], result['bottomright']['y'])
-		if confidence > 0.85 and ((startX + endX) / 2) < 300:
+		if confidence > 0.75 and ((startX + endX) / 2) < 300:
 			rects.append((startX, startY, endX, endY))
 
 			frame_copy = cv2.rectangle(frame_copy, tl, br, (0, 255, 0), 2)
-	objects = ct.update(rects)	
-	print(len(objects))	
-	pt.updateObject(rects, objects)
-	(crop, angle, cx, cy) = pt.updateAngle(frame)
-	if crop is not None:
-		cv2.imshow('Process Item', crop)
-		# cv2.circle(crop, (cx, cy), 2, (0, 255, 0), -1)
-		# print(cx, cy)
-	else:
-		pass
+	# objects = ct.update(rects)	
+	# print(len(objects))	
+	# pt.updateObject(rects, objects)
+	# (crop, angle, cx, cy) = pt.updateAngle(frame)
+	# if crop is not None:
+	# 	cv2.imshow('Process Item', crop)
+	# 	# cv2.circle(crop, (cx, cy), 2, (0, 255, 0), -1)
+	# 	# print(cx, cy)
+	# else:
+	# 	pass
 	
-	vt.update(objects)
-	vt.velocityChange()
-	for (objectID, centroid) in objects.items():
-		velocity = vt.velocity[objectID]
-		# draw both the ID of the object and the centroid of the
-		# object on the output frame
-		text = "ID {}".format(objectID)
-		textVelocity = "{}".format(velocity)
-		cv2.putText(frame_copy, text, (centroid[0] - 10, centroid[1] - 10),
-			cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-		cv2.putText(frame_copy, textVelocity, (centroid[0] + 10, centroid[1] + 10),
-			cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
-		cv2.circle(frame_copy, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
+	# vt.update(objects)
+	# vt.velocityChange()
+	# for (objectID, centroid) in objects.items():
+	# 	velocity = vt.velocity[objectID]
+	# 	# draw both the ID of the object and the centroid of the
+	# 	# object on the output frame
+	# 	text = "ID {}".format(objectID)
+	# 	textVelocity = "{}".format(velocity)
+	# 	cv2.putText(frame_copy, text, (centroid[0] - 10, centroid[1] - 10),
+	# 		cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+	# 	cv2.putText(frame_copy, textVelocity, (centroid[0] + 10, centroid[1] + 10),
+	# 		cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+	# 	cv2.circle(frame_copy, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
 		
 	# cv2.circle(frame_copy, (cx, cy), 4, (255, 255, 0), -1)
 	
 	
 	cv2.imshow('frame_copy', frame_copy)
 	delta_time = (time.time() - stime) * 1000
+	print(delta_time)
 	# print(delta_time)
 	if delta_time > wait_time:
 		delay_time = 1
@@ -112,8 +113,8 @@ while True:
 
 
 	if cv2.waitKey(int(delay_time)) & 0xFF == ord('q'):
-		cv2.imwrite('crop.jpg', crop)
-		cv2.imwrite('frame.jpg', frame)
+		# cv2.imwrite('crop.jpg', crop)
+		# cv2.imwrite('frame.jpg', frame)
 		break
 
 

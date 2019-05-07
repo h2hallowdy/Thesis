@@ -610,6 +610,8 @@ class Ui_MainControllerUI(object):
             _angle = angle * 180.0 / 3.14159
             pointX = _x * 2.45 - 35.2 + 2
             pointY = _y * 2.45 + 1 
+            self.xProLbl.setText(str(pointX))
+            self.yProLbl.setText(str(pointY))
             print(_angle)
             self.sumX += pointX
             self.sumY += pointY
