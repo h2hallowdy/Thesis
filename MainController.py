@@ -50,14 +50,19 @@ class Ui_MainControllerUI(object):
         self.sumY = 0
         self.sumAngle = 0
         self.positionDictionary = {
-            '1': [10, 20, 90],
-            '2': [10, 23, 90],
-            '3': [10, 26, 90],
-            '4': [10, 29, 90],
-            '5': [10, 32, 90],
-            '6': [10, 35, 90],
+            '1': [15, 20, 90],
+            '2': [20, 20, 90],
+            '3': [25, 20, 90],
+            '4': [15, 25, 90],
+            '5': [20, 25, 90],
+            '6': [25, 25, 90],
         }
         self.objectCounting = 0
+        self.currentDestination = 1
+        self.myTimer = QtCore.QTimer()
+        self.myTimer.timeout.connect(self.SendDestination)
+        self.runAgain = QtCore.QTimer()
+        self.runAgain.timeout.connect(self.RunAgain)
         try:
             with np.load('Calib.npz') as X:
                 self.mtx, self.dist, self.rvects, self.tvects, self.corners = [X[i] for i in ('mtx','dist','rvecs','tvecs', 'corners')]
@@ -637,8 +642,11 @@ class Ui_MainControllerUI(object):
                 message = UARTMessage(aveX, aveY, aveA, 'c')
                 message_bytes = bytes(message, encoding='utf-8')
                 self.ser.write(message_bytes)
+                self.myTimer.start(8000)
             self.updateTimer.setInterval(4)
+
         except:
+            print('wrong')
             frame = self.od.Get_Frame()
             height, width, channel = frame.shape
             bytesPerLine = 3 * width
@@ -750,7 +758,27 @@ class Ui_MainControllerUI(object):
         GetCalibrationParams()
         # UsingParams(np.array([[183, 285, 1]]).T)
 
-        
+    def SendDestination(self):
+        index = str(self.currentDestination)
+        nextPoints = self.positionDictionary[index]
+        nextX, nextY, nextAngle = nextPoints[0], nextPoints[1], nextPoints[2]
+        if self.currentDestination < 6:
+            self.currentDestination += 1
+        else:
+            self.currentDestination = 1 
+        mess = UARTMessage(nextX, nextY, nextAngle, 'r')
+        mess_bytes = bytes(mess, encoding='utf-8')
+        self.ser.write(mess_bytes)
+        self.runAgain.start(8000)
+        self.myTimer.stop()
+
+    def RunAgain(self):
+        self.stateProcess = False
+        self.count = 0
+        self.sumX = 0
+        self.sumY = 0
+        self.sumAngle = 0
+        self.runAgain.stop()
 
 if __name__ == "__main__":
     import sys

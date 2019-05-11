@@ -13,7 +13,6 @@ def first(s):
 class ProcessItem():
     def __init__(self, error=10):
         self.error = error
-        self.angle = 0
         self.rects = []
         self.processObject = None
     
@@ -179,11 +178,15 @@ class ProcessItem():
             #for debugging
             print(dau, dit)
             # Positive
-            if dau[1] >= dit[1]:
+            if dau[1] > dit[1]:
                 angle = math.acos(cos)
-            elif dau[1] < dau[0]:
+            elif dau[1] < dit[1]:
                 angle = -math.acos(cos)
-            # print(angle)
+            elif dau[0] > dit[0]:
+                angle = 0
+            elif dau[0] < dit[0]:
+                angle = math.acos(-1)
+            print(angle)
             #endregion
 
             # Return real world center of product.
