@@ -52,12 +52,14 @@ class ProcessItem():
                 cropGray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
                 th = cv2.adaptiveThreshold(cropGray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 337, 44)
                 myThresh = 255 - th
-                cv2.imshow('dilation',myThresh)
+                
                 _, contours, _ = cv2.findContours(myThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                 c = max(contours, key = cv2.contourArea)
                 rect = cv2.minAreaRect(c)
                 box = cv2.boxPoints(rect)
                 box = np.int0(box)
+                cv2.drawContours(cropGray, [box],0,(0,0,255),1)
+                cv2.imshow('dilation',cropGray)
                 #endregion
             elif mode == 1:
                 #region: On conveyor belt image processing

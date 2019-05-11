@@ -493,7 +493,7 @@ class Ui_MainControllerUI(object):
             t_log = GetTime()
             logging.error(t_log + ': Error connection.')
         else: 
-            message = b"h000000000"
+            message = b"h00000000000000000000"
             # byteMessage = bytes(message, encoding='utf-8')
             self.ser.write(message)
             logging.basicConfig(filename=self.FILE_LOG, level=logging.INFO)
@@ -608,8 +608,8 @@ class Ui_MainControllerUI(object):
             _x, _y = realPoints.item(0), realPoints.item(1)
             # print(_x, _y)
             _angle = angle * 180.0 / 3.14159
-            pointX = _x * 2.45 - 35.2 + 2
-            pointY = _y * 2.45 + 1 
+            pointX = _x * 2.45 - 35
+            pointY = _y * 2.45 + 0.1
             self.xProLbl.setText(str(pointX))
             self.yProLbl.setText(str(pointY))
             print(_angle)
