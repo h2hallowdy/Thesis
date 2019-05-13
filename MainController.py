@@ -498,6 +498,7 @@ class Ui_MainControllerUI(object):
             t_log = GetTime()
             logging.error(t_log + ': Error connection.')
         else: 
+            self.stateProcess = False
             message = b"h00000000000000000000"
             # byteMessage = bytes(message, encoding='utf-8')
             self.ser.write(message)
@@ -524,34 +525,51 @@ class Ui_MainControllerUI(object):
     def read_data(self):
         if self.state == True:
             buf = self.ser.read(self.ser.inWaiting())
-            if b'[' in buf and b']' in buf:
-                start = buf.find(b'[')
-                buf = buf[start + 1:]
-                end = buf.find(b']')
-                message = buf[:end].decode('utf-8')
-            else:
-                message = ''
+            message = buf.decode('utf-8')
+            
+            # if b'[' in buf and b']' in buf:
+            #     start = buf.find(b'[')
+            #     buf = buf[start + 1:]
+            #     end = buf.find(b']')
+            #     message = buf[:end].decode('utf-8')
+            # else:
+            #     message = ''
         else:
             buf = 0
             message = ''
         if message != '':
-            arrayCoordinates = message.split(',')
-            print(arrayCoordinates)
-            self.xCurLbl.setText(arrayCoordinates[0])
-            self.yCurLbl.setText(arrayCoordinates[1])
-            self.zCurLbl.setText(arrayCoordinates[2])
-            print(arrayCoordinates[3])
-            print(arrayCoordinates[4])
-            if arrayCoordinates[3] == 'c':
-                for index in self.positionDictionary:
-                    if arrayCoordinates[4] == index:
-                        nextPoints = self.positionDictionary[index]
+            command = message
+            print(len(command))
+            # arrayCoordinates = message.split(',')
+            # print(arrayCoordinates)
+            # self.xCurLbl.setText(arrayCoordinates[0])
+            # self.yCurLbl.setText(arrayCoordinates[1])
+            # self.zCurLbl.setText(arrayCoordinates[2])
+            # print(arrayCoordinates[3])
+            # print(arrayCoordinates[4])
+            if command == 'c':
+                # for index in self.positionDictionary:
+                #     if arrayCoordinates[4] == index:
+                #         nextPoints = self.positionDictionary[index]
+                # nextX, nextY, nextAngle = nextPoints[0], nextPoints[1], nextPoints[2]
+                # mess = UARTMessage(nextX, nextY, nextAngle, 'r')
+                # mess_bytes = bytes(mess, encoding='utf-8')
+                # self.ser.write(mess_bytes)
+                print('cac')
+                
+                index = str(self.currentDestination)
+                nextPoints = self.positionDictionary[index]
                 nextX, nextY, nextAngle = nextPoints[0], nextPoints[1], nextPoints[2]
+                if self.currentDestination < 6:
+                    self.currentDestination += 1
+                else:
+                    self.currentDestination = 1 
                 mess = UARTMessage(nextX, nextY, nextAngle, 'r')
                 mess_bytes = bytes(mess, encoding='utf-8')
+                
                 self.ser.write(mess_bytes)
-
-            elif arrayCoordinates[3] == 'd':
+                print('cac2')
+            elif command == 'r':
                 logging.basicConfig(filename=self.FILE_LOG, level=logging.INFO)
                 t_log = GetTime()
                 logging.info(t_log + ': Object number ' + str(self.objectCounting) + ' done.')
@@ -562,7 +580,7 @@ class Ui_MainControllerUI(object):
                 self.sumAngle = 0
             else:
                 self.stateProcess = True 
-        self.timer.setInterval(300)
+        self.timer.setInterval(500)
         # return buf
 
     ########################################################################################
@@ -617,7 +635,7 @@ class Ui_MainControllerUI(object):
             pointY = _y * 2.45 + 0.1
             self.xProLbl.setText(str(pointX))
             self.yProLbl.setText(str(pointY))
-            print(_angle)
+            # print(_angle)
             self.sumX += pointX
             self.sumY += pointY
             self.sumAngle += _angle
@@ -642,11 +660,11 @@ class Ui_MainControllerUI(object):
                 message = UARTMessage(aveX, aveY, aveA, 'c')
                 message_bytes = bytes(message, encoding='utf-8')
                 self.ser.write(message_bytes)
-                self.myTimer.start(8000)
+                # self.myTimer.start(8000)
             self.updateTimer.setInterval(4)
 
         except:
-            print('wrong')
+            
             frame = self.od.Get_Frame()
             height, width, channel = frame.shape
             bytesPerLine = 3 * width
