@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-
-# Form implementation generated from reading ui file 'E:\setup files\NVIDIA\GUI\screens\Configuration.ui'
-#
-# Created by: PyQt5 UI code generator 5.11.3
-#
-# WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 import time
@@ -14,7 +7,7 @@ import serial
 class Ui_ConfigurationUI(object):
     ser = 0
     state = False
-
+    mode = 1
     def setupUi(self, ConfigurationUI):
         ConfigurationUI.setObjectName("ConfigurationUI")
         ConfigurationUI.resize(290, 601)
@@ -176,8 +169,8 @@ class Ui_ConfigurationUI(object):
         self.handshakeCb.setItemText(0, _translate("ConfigurationUI", "OFF"))
         self.handshakeCb.setItemText(1, _translate("ConfigurationUI", "RTS/CTS"))
         self.label_6.setText(_translate("ConfigurationUI", "Mode"))
-        self.modeCb.setItemText(0, _translate("ConfigurationUI", "Free"))
-        self.modeCb.setItemText(1, _translate("ConfigurationUI", "Data"))
+        self.modeCb.setItemText(0, _translate("ConfigurationUI", "1"))
+        self.modeCb.setItemText(1, _translate("ConfigurationUI", "2"))
         self.modeCb.setItemText(2, _translate("ConfigurationUI", "Setup"))
         self.openBtn.setText(_translate("ConfigurationUI", "Open "))
         self.closeBtn.setText(_translate("ConfigurationUI", "Close "))
@@ -209,6 +202,7 @@ class Ui_ConfigurationUI(object):
         Ui_ConfigurationUI.ser.bytesize = bytesize
         Ui_ConfigurationUI.ser.parity = parity
         Ui_ConfigurationUI.ser.rtscts = handshake
+        Ui_ConfigurationUI.mode = int(self.modeCb.currentText())
         print(Ui_ConfigurationUI.ser)
         
 

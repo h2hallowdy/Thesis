@@ -28,6 +28,7 @@ class Ui_MainControllerUI(object):
     stateAutoMode = False
     stateProcess = False
     stateHoming = False
+    mode = 1
     # running = threading.Event()
     # running.set()
     ser = serial.Serial()
@@ -368,7 +369,7 @@ class Ui_MainControllerUI(object):
 
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.read_data)
-        self.timer.start(300)
+        # self.timer.start(300)
         
         # Initialize callbacks and events
         ## For Screens
@@ -478,6 +479,7 @@ class Ui_MainControllerUI(object):
     '''Custom close event ***very important '''
     def closeEvent(self, *arg):
         self.ser = Ui_ConfigurationUI.ser
+        self.mode = Ui_ConfigurationUI.mode - 1
         self.SetState(Ui_ConfigurationUI.state)
            
     ''' Open Configuration Ui '''
@@ -526,50 +528,29 @@ class Ui_MainControllerUI(object):
         if self.state == True:
             buf = self.ser.read(self.ser.inWaiting())
             message = buf.decode('utf-8')
-            
-            # if b'[' in buf and b']' in buf:
-            #     start = buf.find(b'[')
-            #     buf = buf[start + 1:]
-            #     end = buf.find(b']')
-            #     message = buf[:end].decode('utf-8')
-            # else:
-            #     message = ''
         else:
             buf = 0
             message = ''
         if message != '':
+            print(message)
             command = message
-            print(len(command))
-            # arrayCoordinates = message.split(',')
-            # print(arrayCoordinates)
-            # self.xCurLbl.setText(arrayCoordinates[0])
-            # self.yCurLbl.setText(arrayCoordinates[1])
-            # self.zCurLbl.setText(arrayCoordinates[2])
-            # print(arrayCoordinates[3])
-            # print(arrayCoordinates[4])
             if command == 'c':
-                # for index in self.positionDictionary:
-                #     if arrayCoordinates[4] == index:
-                #         nextPoints = self.positionDictionary[index]
-                # nextX, nextY, nextAngle = nextPoints[0], nextPoints[1], nextPoints[2]
-                # mess = UARTMessage(nextX, nextY, nextAngle, 'r')
-                # mess_bytes = bytes(mess, encoding='utf-8')
-                # self.ser.write(mess_bytes)
-                print('cac')
-                
+                print('in c')
                 index = str(self.currentDestination)
                 nextPoints = self.positionDictionary[index]
                 nextX, nextY, nextAngle = nextPoints[0], nextPoints[1], nextPoints[2]
                 if self.currentDestination < 6:
                     self.currentDestination += 1
                 else:
-                    self.currentDestination = 1 
+                    self.currentDestination = 1
+                print(self.currentDestination) 
                 mess = UARTMessage(nextX, nextY, nextAngle, 'r')
                 mess_bytes = bytes(mess, encoding='utf-8')
                 
                 self.ser.write(mess_bytes)
-                print('cac2')
+                
             elif command == 'r':
+                print('in r')
                 logging.basicConfig(filename=self.FILE_LOG, level=logging.INFO)
                 t_log = GetTime()
                 logging.info(t_log + ': Object number ' + str(self.objectCounting) + ' done.')
@@ -578,9 +559,14 @@ class Ui_MainControllerUI(object):
                 self.sumX = 0
                 self.sumY = 0
                 self.sumAngle = 0
+                self.timer.stop()
+                
             else:
-                self.stateProcess = True 
-        self.timer.setInterval(500)
+                print('in nothing')
+                self.stateProcess = True
+        else:
+            pass
+        self.timer.setInterval(600)
         # return buf
 
     ########################################################################################
@@ -618,7 +604,7 @@ class Ui_MainControllerUI(object):
         
     def update_Image(self):
         try:
-            frame, cx, cy, angle = self.od.Process()
+            frame, cx, cy, angle = self.od.Process(self.mode)
             height, width, channel = frame.shape
             bytesPerLine = 3 * width
             qImg = QtGui.QImage(frame.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888).rgbSwapped()
@@ -660,6 +646,7 @@ class Ui_MainControllerUI(object):
                 message = UARTMessage(aveX, aveY, aveA, 'c')
                 message_bytes = bytes(message, encoding='utf-8')
                 self.ser.write(message_bytes)
+                self.timer.start(600)
                 # self.myTimer.start(8000)
             self.updateTimer.setInterval(4)
 

@@ -21,7 +21,7 @@ class ObjectDetection():
         self.colors = [tuple(255 * np.random.rand(3)) for _ in range(5)]
         # initialize our centroid tracker and frame dimensions
         self.ct = CentroidTracker()
-        self.vt = VelocityTracker(OrderedDict())
+        # self.vt = VelocityTracker(OrderedDict())
         self.pt = ProcessItem()
         self.capture = cv2.VideoCapture(0)
         
@@ -33,7 +33,8 @@ class ObjectDetection():
         self.cx = 0
         self.cy = 0
     
-    def Process(self):
+    def Process(self, mode):
+        pre_time = time.time()
         ret, frame = self.capture.read()
         # frame = cv2.resize(frame, (640, 360))
         frame_copy = frame.copy()
@@ -54,9 +55,10 @@ class ObjectDetection():
                 frame_copy = cv2.rectangle(frame_copy, tl, br, (0, 255, 0), 2)    
         objects = self.ct.update(rects)
         self.pt.updateObject(rects, objects)
-        (crop, angle, cx, cy) = self.pt.updateAngle(frame, 0)
-        self.vt.update(objects)
-        self.vt.velocityChange()
+        (crop, angle, cx, cy) = self.pt.updateAngle(frame, mode)
+        # self.vt.update(objects)
+        # self.vt.velocityChange()
+        
         if crop is not None:
             return frame_copy, cx, cy, angle
         else:

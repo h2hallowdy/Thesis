@@ -157,6 +157,7 @@ class ProcessItem():
 
             dodai1 = self.calculation(cen1, tam)
             dodai2 = self.calculation(cen2, tam)
+            # print(dodai1, dodai2)
             if dodai1 > dodai2:
                 dau = cen2
                 dit = cen1
@@ -176,7 +177,7 @@ class ProcessItem():
             cos = v_dot / (d1*d2)
             
             #for debugging
-            print(dau, dit)
+            # print(dau, dit)
             # Positive
             if dau[1] > dit[1]:
                 angle = math.acos(cos)
@@ -186,7 +187,7 @@ class ProcessItem():
                 angle = 0
             elif dau[0] < dit[0]:
                 angle = math.acos(-1)
-            print(angle)
+            # print(angle)
             #endregion
 
             # Return real world center of product.
@@ -200,7 +201,7 @@ class ProcessItem():
 
     def BlueFilter(self, img):
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        lower_blue = np.array([96,180,30], dtype=np.uint8)
+        lower_blue = np.array([110,180,30], dtype=np.uint8)
         upper_blue = np.array([118,255,255], dtype=np.uint8)
         mask = cv2.inRange(hsv, lower_blue, upper_blue)
         res = cv2.bitwise_and(img, img, mask = mask)
