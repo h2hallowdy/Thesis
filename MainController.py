@@ -54,9 +54,9 @@ class Ui_MainControllerUI(object):
             '1': [15, 20, 90],
             '2': [20, 20, 90],
             '3': [25, 20, 90],
-            '4': [15, 25, 90],
-            '5': [20, 25, 90],
-            '6': [25, 25, 90],
+            '4': [15, 30, 90],
+            '5': [20, 30, 90],
+            '6': [25, 30, 90],
         }
         self.objectCounting = 0
         self.currentDestination = 1
@@ -65,16 +65,28 @@ class Ui_MainControllerUI(object):
         self.runAgain = QtCore.QTimer()
         self.runAgain.timeout.connect(self.RunAgain)
         try:
+            #region: Load M, R, T, corners for Mode 1
             with np.load('Calib.npz') as X:
                 self.mtx, self.dist, self.rvects, self.tvects, self.corners = [X[i] for i in ('mtx','dist','rvecs','tvecs', 'corners')]
-                print(self.mtx)
            
             self.rodrigues_Vecs = InverseRodrigues(self.rvects)
             translate = np.reshape(self.tvects, (3, 1))
             K = np.concatenate((self.rodrigues_Vecs, translate), axis=1)
             a = self.mtx.dot(K).dot(np.array([[1, 1, 1, 1]]).T)
             self.s = a.item(2)
-            print(self.s)
+            #endregion
+
+            #region: Load M, R, T, corners for Mode 2
+            with np.load('Calib_bc.npz') as P:
+                self.mtx_BC, self.dist_BC, self.rvects_BC, self.tvects_BC, self.corners_BC = [P[i] for i in ('mtx','dist','rvecs','tvecs', 'corners')]
+
+            self.rodrigues_Vecs_BC = InverseRodrigues(self.rvects_BC)
+            translate_BC = np.reshape(self.tvects_BC, (3, 1))
+            K_bc = np.concatenate((self.rodrigues_Vecs_BC, translate_BC), axis=1)
+            a_bc = self.mtx_BC.dot(K_bc).dot(np.array([[1, 1, 1, 1]]).T)
+            self.s_BC = a_bc.item(2)
+            #endregion
+            
         except:
             print('error occured')
 
@@ -482,6 +494,7 @@ class Ui_MainControllerUI(object):
         self.ser = Ui_ConfigurationUI.ser
         self.mode = Ui_ConfigurationUI.mode - 1
         self.SetState(Ui_ConfigurationUI.state)
+        print(self.mode)
            
     ''' Open Configuration Ui '''
     def openCongiguration(self):
@@ -555,7 +568,7 @@ class Ui_MainControllerUI(object):
                 
                 mess = UARTMessage(nextX, nextY, nextAngle, 'r', 3)
                 mess_bytes = bytes(mess, encoding='utf-8')
-                time.sleep(0.5)
+                time.sleep(0.2)
                 self.ser.write(mess_bytes)
                 
             elif command == 'r':
@@ -621,12 +634,24 @@ class Ui_MainControllerUI(object):
             self.liveVidFrame.setPixmap(qPixMap)
             
             points = np.array([[cx, cy, 1]]).T
-            realPoints = ImgPoints2RealPoints(self.mtx, self.rodrigues_Vecs, self.tvects, points, self.s)
-            _x, _y = realPoints.item(0), realPoints.item(1)
+            
             print(cx, cy)
             _angle = angle * 180.0 / 3.14159
-            pointX = _x * 2.45 - 34.15
-            pointY = _y * 2.45 + 0
+            
+            # duoi dat
+            if self.mode == 0:
+                print('mode 0')
+                realPoints = ImgPoints2RealPoints(self.mtx, self.rodrigues_Vecs, self.tvects, points, self.s)
+                _x, _y = realPoints.item(0), realPoints.item(1)
+                pointX = _x * 2.45 - 34.15
+                pointY = _y * 2.45 + 0
+            # tren bang chuyen
+            elif self.mode == 1:
+                print('mode 1')
+                realPoints = ImgPoints2RealPoints(self.mtx_BC, self.rodrigues_Vecs_BC, self.tvects_BC, points, self.s_BC)
+                _x, _y = realPoints.item(0), realPoints.item(1)
+                pointX = _x * 2.45 - 30
+                pointY = _y * 2.45 + 20
             self.xProLbl.setText(str(pointX))
             self.yProLbl.setText(str(pointY))
             # print(_angle)
@@ -646,6 +671,9 @@ class Ui_MainControllerUI(object):
                     aveY += 0.4
                 else:
                     aveY += 0.2
+                if self.mode == 1:
+                    aveX += 1.0
+                    aveY += 1.7
                 self.sumX = 0
                 self.sumY = 0
                 self.sumAngle = 0
