@@ -5,13 +5,13 @@
 # Created:          Wednesday April 24
 # Note:             1-negative; 0-positive
 #-------------------------------------------------------------------------------
-def UARTMessage(aveX, aveY, aveAng, mode):
+def UARTMessage(aveX, aveY, aveAng, mode, z):
     if mode == 'c':
-        message = 'c-'
+        message = 'c'
     elif mode == 'r':
-        message = 'r-'
+        message = 'r'
     elif mode == 'g':
-        message = 'g-'
+        message = 'g'
 
     #region: X point
     if aveX > 0.0:
@@ -36,11 +36,21 @@ def UARTMessage(aveX, aveY, aveAng, mode):
     #region: Angle
     if aveAng > 0.0:
         intA, pointA = SplitNumber(aveAng, 1)
-        message += '0' + '{:03d}'.format(intA) + '{:01d}'.format(pointA) + '-0'
+        message += '0' + '{:03d}'.format(intA) + '{:01d}'.format(pointA) + '-'
     else:
         aveAng = -aveAng
         intA, pointA = SplitNumber(aveAng, 1)
-        message += '1' + '{:03d}'.format(intA) + '{:01d}'.format(pointA) + '-0'
+        message += '1' + '{:03d}'.format(intA) + '{:01d}'.format(pointA) + '-'
+    #endregion
+
+    #region: Z point
+    if z > 0.0:
+        intZ, pointZ = SplitNumber(z, 1)
+        message += '{:01d}'.format(intZ) + '{:01d}'.format(pointZ)
+    else:
+        z = -z
+        intZ, pointZ = SplitNumber(z, 1)
+        message += '{:01d}'.format(intZ) + '{:01d}'.format(pointZ)
     #endregion
 
     return message

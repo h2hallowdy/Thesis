@@ -151,9 +151,9 @@ class ProcessItem():
                 vtpt = vtcp
                 cen1 = (box[0] + box[3]) / 2
                 cen2 = (box[2] + box[1]) / 2
-            _cx, _cy = rect[0]
+            _cx, _cy = (cen1 + cen2) / 2
             
-            
+            print(_cx, _cy)
 
             dodai1 = self.calculation(cen1, tam)
             dodai2 = self.calculation(cen2, tam)

@@ -44,7 +44,7 @@ def GetCalibrationParams():
             img = cv2.drawChessboardCorners(img, (9,6), corners2,ret)
             ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1],None,None)
 
-            np.savez('Calib.npz', mtx=mtx, dist=dist, rvecs=rvecs, tvecs=tvecs, corners=corners2)
+            np.savez('Calib_bc.npz', mtx=mtx, dist=dist, rvecs=rvecs, tvecs=tvecs, corners=corners2)
             cv2.imshow('img',img)
             cv2.waitKey(0)
             break
@@ -68,6 +68,7 @@ def ImgPoints2RealPoints(camearMtx, rodriguesMtx, translateMtx, imgPts, scaleFac
     mInverse = inv(camearMtx)
     
     realWorldPoints = rInverse.dot(mInverse).dot(scaleFactor * imgPts) - rInverse.dot(translate)
+    print(realWorldPoints)
     return realWorldPoints
 
 

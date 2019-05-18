@@ -369,6 +369,7 @@ class Ui_MainControllerUI(object):
 
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.read_data)
+        self.timer.start(600)
         # self.timer.start(300)
         
         # Initialize callbacks and events
@@ -501,12 +502,19 @@ class Ui_MainControllerUI(object):
             logging.error(t_log + ': Error connection.')
         else: 
             self.stateProcess = False
+            self.count = 0
+            self.sumX = 0
+            self.sumY = 0
+            self.sumAngle = 0
+            
             message = b"h00000000000000000000"
             # byteMessage = bytes(message, encoding='utf-8')
             self.ser.write(message)
             logging.basicConfig(filename=self.FILE_LOG, level=logging.INFO)
             t_log = GetTime()
             logging.info(t_log + ': Arm Homing.')
+            time.sleep(15)
+            
     ########################################################################################
     #                                                                                      #
     # Create Message box                                                                   #
@@ -544,9 +552,10 @@ class Ui_MainControllerUI(object):
                 else:
                     self.currentDestination = 1
                 print(self.currentDestination) 
-                mess = UARTMessage(nextX, nextY, nextAngle, 'r')
-                mess_bytes = bytes(mess, encoding='utf-8')
                 
+                mess = UARTMessage(nextX, nextY, nextAngle, 'r', 3)
+                mess_bytes = bytes(mess, encoding='utf-8')
+                time.sleep(0.5)
                 self.ser.write(mess_bytes)
                 
             elif command == 'r':
@@ -559,7 +568,6 @@ class Ui_MainControllerUI(object):
                 self.sumX = 0
                 self.sumY = 0
                 self.sumAngle = 0
-                self.timer.stop()
                 
             else:
                 print('in nothing')
@@ -615,10 +623,10 @@ class Ui_MainControllerUI(object):
             points = np.array([[cx, cy, 1]]).T
             realPoints = ImgPoints2RealPoints(self.mtx, self.rodrigues_Vecs, self.tvects, points, self.s)
             _x, _y = realPoints.item(0), realPoints.item(1)
-            # print(_x, _y)
+            print(cx, cy)
             _angle = angle * 180.0 / 3.14159
-            pointX = _x * 2.45 - 35
-            pointY = _y * 2.45 + 0.1
+            pointX = _x * 2.45 - 34.15
+            pointY = _y * 2.45 + 0
             self.xProLbl.setText(str(pointX))
             self.yProLbl.setText(str(pointY))
             # print(_angle)
@@ -634,7 +642,10 @@ class Ui_MainControllerUI(object):
                 # + 0.2 * math.cos(aveA * 3.14159 / 180.0)
                 aveX = self.sumX / 10.0 
                 aveY = self.sumY / 10.0
-                
+                if aveY <= 25.0:
+                    aveY += 0.4
+                else:
+                    aveY += 0.2
                 self.sumX = 0
                 self.sumY = 0
                 self.sumAngle = 0
@@ -643,15 +654,19 @@ class Ui_MainControllerUI(object):
                 logging.basicConfig(filename=self.FILE_LOG, level=logging.INFO)
                 t_log = GetTime()
                 logging.info(t_log + ': ' + 'Object number ' + str(self.objectCounting) + ' in progress.')
-                message = UARTMessage(aveX, aveY, aveA, 'c')
-                message_bytes = bytes(message, encoding='utf-8')
+
+                if self.mode == 0:
+                    message = UARTMessage(aveX, aveY, aveA, 'c', 3)
+                    message_bytes = bytes(message, encoding='utf-8')
+                elif self.mode == 1:
+                    message = UARTMessage(aveX, aveY, aveA, 'c', 8)
+                    message_bytes = bytes(message, encoding='utf-8')
                 self.ser.write(message_bytes)
-                self.timer.start(600)
+                
                 # self.myTimer.start(8000)
             self.updateTimer.setInterval(4)
 
         except:
-            
             frame = self.od.Get_Frame()
             height, width, channel = frame.shape
             bytesPerLine = 3 * width
@@ -660,8 +675,7 @@ class Ui_MainControllerUI(object):
             qPixMap = qPixMap.scaled(self.liveVidFrame.width(), self.liveVidFrame.height(),QtCore.Qt.KeepAspectRatio)
             self.liveVidFrame.setPixmap(qPixMap)
             self.updateTimer.setInterval(4)
-
-
+            
     ########################################################################################
     #                                                                                      #
     # Manual Mode                                                                          #
@@ -690,6 +704,7 @@ class Ui_MainControllerUI(object):
             self.ui.setupUi(self.widget)
             self.widget.closeEvent = self.closeManualMode
             self.widget.show()
+
     def closeManualMode(self, *args):
         logging.basicConfig(filename=self.FILE_LOG, level=logging.INFO)
         t_log = GetTime()
