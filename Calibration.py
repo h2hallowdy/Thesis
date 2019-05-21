@@ -68,7 +68,6 @@ def ImgPoints2RealPoints(camearMtx, rodriguesMtx, translateMtx, imgPts, scaleFac
     mInverse = inv(camearMtx)
     
     realWorldPoints = rInverse.dot(mInverse).dot(scaleFactor * imgPts) - rInverse.dot(translate)
-    print(realWorldPoints)
     return realWorldPoints
 
 

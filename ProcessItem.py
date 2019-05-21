@@ -40,7 +40,10 @@ class ProcessItem():
             (startX, startY, endX, endY) = self.processObject
             temp_cx = (startX + endX) / 2.0
             temp_cy = (startY + endY) / 2.0
-            crop = img[startY - self.error : endY + self.error, startX - self.error : endX + self.error]
+            if mode == 0:
+                crop = img[startY - self.error : endY + self.error, startX - self.error : endX + self.error]
+            elif mode == 1:
+                crop = img[startY - 5 : endY + 5, startX - 5 : endX + 5]
             # crop = img[startY : endY, startX : endX]
             w, h = crop.shape[1], crop.shape[0]
             _new_cenX = w / 2.0
@@ -110,11 +113,22 @@ class ProcessItem():
                 #region: Same thing to find 4 points coordinates
                 cropGray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
                 _, contours, _ = cv2.findContours(super_result, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
                 c = max(contours, key = cv2.contourArea)
+                for smallerC in contours:
+                    if cv2.contourArea(smallerC) > 474 and cv2.contourArea(smallerC) < 560:
+                        c1 = smallerC
+                        (x, y), (w, h), _ = cv2.minAreaRect(c)
+                        if h != 0:
+                            ratio = w / h
+                            if ratio > 1.78 and ratio < 2.3:
+                                c = smallerC
+                                break
+                
                 rect = cv2.minAreaRect(c)
                 box = cv2.boxPoints(rect)
                 box = np.int0(box)
+                sax = crop.copy()
+                cv2.drawContours(sax, [box],0,(0,0,255),1)
                 #endregion
 
                 #endregion
@@ -131,8 +145,8 @@ class ProcessItem():
             tam = rectAngle[0]
             # print(tam)
 
-            cv2.imshow('cropAngle', cropAngle)
-            cv2.imshow('haha',crop)
+            # cv2.imshow('cropAngle', cropAngle)
+            
             aw, ah = cropAngle.shape[1], cropAngle.shape[0]
 
             myLength1 = self.calculation(box[0], box[1])
@@ -154,7 +168,9 @@ class ProcessItem():
             _cx, _cy = (cen1 + cen2) / 2
             
             print(_cx, _cy)
-
+            
+            # cv2.circle(sax, (_cx, _cy), 2, (0, 255, 0), -1)
+            cv2.imshow('haha',sax)
             dodai1 = self.calculation(cen1, tam)
             dodai2 = self.calculation(cen2, tam)
             # print(dodai1, dodai2)
@@ -177,17 +193,17 @@ class ProcessItem():
             cos = v_dot / (d1*d2)
             
             #for debugging
-            # print(dau, dit)
+            print(dau, dit)
             # Positive
             if dau[1] > dit[1]:
                 angle = math.acos(cos)
             elif dau[1] < dit[1]:
                 angle = -math.acos(cos)
             elif dau[0] > dit[0]:
-                angle = 0
-            elif dau[0] < dit[0]:
                 angle = math.acos(-1)
-            # print(angle)
+            elif dau[0] < dit[0]:
+                angle = 0
+            print(angle)
             #endregion
 
             # Return real world center of product.

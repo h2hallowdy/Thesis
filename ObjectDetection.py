@@ -49,10 +49,17 @@ class ObjectDetection():
             confidence = result['confidence']
             text = '{}: {:.0f}%'.format(label, confidence * 100)
             (startX, startY, endX, endY) = (result['topleft']['x'], result['topleft']['y'], result['bottomright']['x'], result['bottomright']['y'])
-            if confidence > 0.85 and ((startX + endX) / 2) < 300:
-                rects.append((startX, startY, endX, endY))
+            if mode == 0:
+                if confidence > 0.85 and ((startX + endX) / 2) < 300:
+                    rects.append((startX, startY, endX, endY))
 
-                frame_copy = cv2.rectangle(frame_copy, tl, br, (0, 255, 0), 2)    
+                    frame_copy = cv2.rectangle(frame_copy, tl, br, (0, 255, 0), 2)   
+            elif mode == 1:
+                if confidence > 0.85 and ((startY + endY) / 2) > 150:
+                    rects.append((startX, startY, endX, endY))
+
+                    frame_copy = cv2.rectangle(frame_copy, tl, br, (0, 255, 0), 2)   
+
         objects = self.ct.update(rects)
         self.pt.updateObject(rects, objects)
         (crop, angle, cx, cy) = self.pt.updateAngle(frame, mode)
@@ -60,6 +67,7 @@ class ObjectDetection():
         # self.vt.velocityChange()
         
         if crop is not None:
+            # frame_copy = cv2.circle(frame_copy, (cx, cy), 2, (0, 255, 0), -1)
             return frame_copy, cx, cy, angle
         else:
             pass

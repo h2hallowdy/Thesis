@@ -10,6 +10,7 @@ import threading
 import numpy as np
 import time
 import serial
+import serial.tools.list_ports
 import array
 import logging
 import cv2
@@ -33,7 +34,13 @@ class Ui_MainControllerUI(object):
     # running.set()
     ser = serial.Serial()
     # ser = serial.Serial()
-    # ser.port = "COM1"
+    ser.port = "COM11"
+    ser.baudrate = 115200
+    ser.bytesize = 8
+    ser.parity = serial.PARITY_NONE
+    ser.rtscts = False
+    
+
     def __init__(self, camera=None):
         super(Ui_MainControllerUI, self).__init__()
         self.homeX = 0
@@ -58,12 +65,32 @@ class Ui_MainControllerUI(object):
             '5': [20, 30, 90],
             '6': [25, 30, 90],
         }
+        self.positionDictionaryBC = {
+            '1': [0, 40, 90],
+            '2': [0, 40, 90],
+            '3': [0, 40, 90],
+            '4': [0, 40, 90],
+            '5': [0, 40, 90],
+            '6': [0, 40, 90]
+        }
         self.objectCounting = 0
         self.currentDestination = 1
         self.myTimer = QtCore.QTimer()
         self.myTimer.timeout.connect(self.SendDestination)
         self.runAgain = QtCore.QTimer()
         self.runAgain.timeout.connect(self.RunAgain)
+        # myports = [tuple(p) for p in list(serial.tools.list_ports.comports())]
+        # uart_port = [port for port in myports if 'COM11' in port]
+        # if len(uart_port) != 0:
+        try:
+            self.ser.open()
+            
+            self.state = True
+            print(self.ser)
+            print(self.mode)
+
+        except:
+            print('cannot find any connection')
         try:
             #region: Load M, R, T, corners for Mode 1
             with np.load('Calib.npz') as X:
@@ -374,7 +401,7 @@ class Ui_MainControllerUI(object):
         self.retranslateUi(MainControllerUI)
         QtCore.QMetaObject.connectSlotsByName(MainControllerUI)
 
-        if Ui_MainControllerUI.state:
+        if self.state:
             self.sttLbl.setText('Open')
         else:
             self.sttLbl.setText('Close')
@@ -433,11 +460,13 @@ class Ui_MainControllerUI(object):
     ########################################################################################
     # Set State -> set new state
     def SetState(self, value):
+        print(self.state)
         self.oldState = self.state
         self.state = value
         self.myEvent = threading.Thread(target=self.StateChange)
         self.myEvent.start()
         self.event.set()
+
     # State change
     def StateChange(self):
         self.event.wait()
@@ -452,14 +481,6 @@ class Ui_MainControllerUI(object):
         if self.state:
             self.sttLbl.setText('Open')
             self.sttLbl.setStyleSheet("border-style: none; color: green; font-weight: 400")
-            # for debugging
-            temp = 'connected \n'
-            # temp_numb = [1, 2, 3]
-            # temp_numb_bytes = bytearray(temp_numb)
-            temp_bytes = bytes(temp, encoding='utf-8')
-            # tmp = array.array('B', [0x00, 0x01, 0x02]).tostring()
-            # self.ser.write(tmp)
-            # self.ser.write(temp_bytes)
             logging.basicConfig(filename=self.FILE_LOG, level=logging.INFO)
             t_log = GetTime()
             logging.info(t_log + ': UART Connected.' + ' Port name: ' + self.ser.port)
@@ -526,7 +547,9 @@ class Ui_MainControllerUI(object):
             logging.basicConfig(filename=self.FILE_LOG, level=logging.INFO)
             t_log = GetTime()
             logging.info(t_log + ': Arm Homing.')
-            time.sleep(15)
+            # time.sleep(30)
+            # md = b"m10000000000000000000"
+            # self.ser.write(md)
             
     ########################################################################################
     #                                                                                      #
@@ -558,7 +581,10 @@ class Ui_MainControllerUI(object):
             if command == 'c':
                 print('in c')
                 index = str(self.currentDestination)
-                nextPoints = self.positionDictionary[index]
+                if self.mode == 0:
+                    nextPoints = self.positionDictionary[index]
+                elif self.mode == 1:
+                    nextPoints = self.positionDictionaryBC[index]
                 nextX, nextY, nextAngle = nextPoints[0], nextPoints[1], nextPoints[2]
                 if self.currentDestination < 6:
                     self.currentDestination += 1
@@ -566,8 +592,13 @@ class Ui_MainControllerUI(object):
                     self.currentDestination = 1
                 print(self.currentDestination) 
                 
-                mess = UARTMessage(nextX, nextY, nextAngle, 'r', 3)
-                mess_bytes = bytes(mess, encoding='utf-8')
+                # Nho sua 2 mode thanh 3 va 8
+                if self.mode == 0:
+                    mess = UARTMessage(nextX, nextY, nextAngle, 'r', 3)
+                    mess_bytes = bytes(mess, encoding='utf-8')
+                elif self.mode == 1:
+                    mess = UARTMessage(nextX, nextY, nextAngle, 'r', 9)
+                    mess_bytes = bytes(mess, encoding='utf-8')
                 time.sleep(0.2)
                 self.ser.write(mess_bytes)
                 
@@ -581,6 +612,12 @@ class Ui_MainControllerUI(object):
                 self.sumX = 0
                 self.sumY = 0
                 self.sumAngle = 0
+            elif command == 'h':
+                print('homing done')
+                md = b"m10000000000000000000"
+                
+                time.sleep(0.2)
+                self.ser.write(md)
                 
             else:
                 print('in nothing')
@@ -626,6 +663,7 @@ class Ui_MainControllerUI(object):
     def update_Image(self):
         try:
             frame, cx, cy, angle = self.od.Process(self.mode)
+            
             height, width, channel = frame.shape
             bytesPerLine = 3 * width
             qImg = QtGui.QImage(frame.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888).rgbSwapped()
@@ -635,7 +673,7 @@ class Ui_MainControllerUI(object):
             
             points = np.array([[cx, cy, 1]]).T
             
-            print(cx, cy)
+            
             _angle = angle * 180.0 / 3.14159
             
             # duoi dat
@@ -645,6 +683,10 @@ class Ui_MainControllerUI(object):
                 _x, _y = realPoints.item(0), realPoints.item(1)
                 pointX = _x * 2.45 - 34.15
                 pointY = _y * 2.45 + 0
+                self.sumX += pointX
+                self.sumY += pointY
+                self.sumAngle += _angle
+                self.count += 1 
             # tren bang chuyen
             elif self.mode == 1:
                 print('mode 1')
@@ -652,28 +694,34 @@ class Ui_MainControllerUI(object):
                 _x, _y = realPoints.item(0), realPoints.item(1)
                 pointX = _x * 2.45 - 30
                 pointY = _y * 2.45 + 20
+                print(pointX, pointY, _angle)
+                self.sumX = pointX
+                self.sumY = pointY
+                self.sumAngle = _angle
+                self.count = 10
             self.xProLbl.setText(str(pointX))
             self.yProLbl.setText(str(pointY))
             # print(_angle)
-            self.sumX += pointX
-            self.sumY += pointY
-            self.sumAngle += _angle
-            self.count += 1
             
             if self.state == True and self.stateProcess == False and self.count == 10:
                 print('---------------------')
                 self.count = 0
                 aveA = self.sumAngle / 10.0
-                # + 0.2 * math.cos(aveA * 3.14159 / 180.0)
                 aveX = self.sumX / 10.0 
                 aveY = self.sumY / 10.0
+                
+                # update toa do sau xx seconds
+                if self.mode == 1:
+                    aveX = aveX * 10.0 + 0.9
+                    aveY = aveY * 10.0 + 2.1 + (1.51 + 0.25 + 0.275) * (20.0 / 6.42)
+                    # aveY = aveY * 10.0 + 1.8
+                    
+                    aveA = aveA * 10.0
                 if aveY <= 25.0:
                     aveY += 0.4
                 else:
                     aveY += 0.2
-                if self.mode == 1:
-                    aveX += 1.0
-                    aveY += 1.7
+                print(aveX, aveY, aveA)
                 self.sumX = 0
                 self.sumY = 0
                 self.sumAngle = 0
@@ -687,7 +735,7 @@ class Ui_MainControllerUI(object):
                     message = UARTMessage(aveX, aveY, aveA, 'c', 3)
                     message_bytes = bytes(message, encoding='utf-8')
                 elif self.mode == 1:
-                    message = UARTMessage(aveX, aveY, aveA, 'c', 8)
+                    message = UARTMessage(aveX, aveY, aveA, 'c', 9)
                     message_bytes = bytes(message, encoding='utf-8')
                 self.ser.write(message_bytes)
                 
@@ -762,7 +810,7 @@ class Ui_MainControllerUI(object):
                 t_log = GetTime()
                 logging.info(t_log + ': Enter Auto Mode successful.')
                 self.createMessageBox('Camera Auto Enabled!', 'Information', 'infor')
-                # self.ser.write(b'a\n')
+                
                 
                 self.enableCam()
         else:

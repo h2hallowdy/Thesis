@@ -205,7 +205,6 @@ class Ui_ConfigurationUI(object):
         Ui_ConfigurationUI.mode = int(self.modeCb.currentText())
         print(Ui_ConfigurationUI.ser)
         
-
     def openPort(self):
         self.initSerial()
         Ui_ConfigurationUI.ser.open()
