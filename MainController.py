@@ -66,12 +66,12 @@ class Ui_MainControllerUI(object):
             '6': [25, 30, 90],
         }
         self.positionDictionaryBC = {
-            '1': [0, 40, 90],
-            '2': [0, 40, 90],
-            '3': [0, 40, 90],
-            '4': [0, 40, 90],
-            '5': [0, 40, 90],
-            '6': [0, 40, 90]
+            '1': [0, 40, 90, 1],
+            '2': [0, 40, 90, 3],
+            '3': [0, 40, 90, 4.5],
+            '4': [0, 40, 90, 1],
+            '5': [0, 40, 90, 3],
+            '6': [0, 40, 90, 4.5]
         }
         self.objectCounting = 0
         self.currentDestination = 1
@@ -540,7 +540,7 @@ class Ui_MainControllerUI(object):
             self.sumX = 0
             self.sumY = 0
             self.sumAngle = 0
-            
+            self.currentDestination = 1
             message = b"h00000000000000000000"
             # byteMessage = bytes(message, encoding='utf-8')
             self.ser.write(message)
@@ -590,14 +590,13 @@ class Ui_MainControllerUI(object):
                     self.currentDestination += 1
                 else:
                     self.currentDestination = 1
-                print(self.currentDestination) 
-                
+                print(self.currentDestination)
                 # Nho sua 2 mode thanh 3 va 8
                 if self.mode == 0:
                     mess = UARTMessage(nextX, nextY, nextAngle, 'r', 3)
                     mess_bytes = bytes(mess, encoding='utf-8')
                 elif self.mode == 1:
-                    mess = UARTMessage(nextX, nextY, nextAngle, 'r', 9)
+                    mess = UARTMessage(nextX, nextY, nextAngle, 'r', nextPoints[3])
                     mess_bytes = bytes(mess, encoding='utf-8')
                 time.sleep(0.2)
                 self.ser.write(mess_bytes)
@@ -810,10 +809,9 @@ class Ui_MainControllerUI(object):
                 t_log = GetTime()
                 logging.info(t_log + ': Enter Auto Mode successful.')
                 self.createMessageBox('Camera Auto Enabled!', 'Information', 'infor')
-                
-                
                 self.enableCam()
         else:
+            self.createMessageBox('Camera Auto Disabled!', 'Information', 'infor')
             logging.basicConfig(filename=self.FILE_LOG, level=logging.INFO)
             t_log = GetTime()
             logging.info(t_log + ': Exit auto Mode.')  
