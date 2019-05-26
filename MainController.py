@@ -29,7 +29,7 @@ class Ui_MainControllerUI(object):
     stateAutoMode = False
     stateProcess = False
     stateHoming = False
-    mode = 1
+    mode = 0
     # running = threading.Event()
     # running.set()
     ser = serial.Serial()
@@ -613,11 +613,13 @@ class Ui_MainControllerUI(object):
                 self.sumAngle = 0
             elif command == 'h':
                 print('homing done')
-                md = b"m10000000000000000000"
-                
-                time.sleep(0.2)
-                self.ser.write(md)
-                
+                if self.mode == 1:
+                    md = b"m10000000000000000000"
+                    
+                    time.sleep(0.2)
+                    self.ser.write(md)
+                else:
+                    pass
             else:
                 print('in nothing')
                 self.stateProcess = True
@@ -633,6 +635,7 @@ class Ui_MainControllerUI(object):
     ########################################################################################
     def enableCam(self):
         self.stateLiveView = not self.stateLiveView
+        print(self.stateLiveView)
         if self.stateLiveView == True:
             logging.basicConfig(filename=self.FILE_LOG, level=logging.INFO)
             t_log = GetTime()
@@ -662,17 +665,13 @@ class Ui_MainControllerUI(object):
     def update_Image(self):
         try:
             frame, cx, cy, angle = self.od.Process(self.mode)
-            
             height, width, channel = frame.shape
             bytesPerLine = 3 * width
             qImg = QtGui.QImage(frame.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888).rgbSwapped()
             qPixMap = QtGui.QPixmap(qImg)
             qPixMap = qPixMap.scaled(self.liveVidFrame.width(), self.liveVidFrame.height(),QtCore.Qt.KeepAspectRatio)
             self.liveVidFrame.setPixmap(qPixMap)
-            
             points = np.array([[cx, cy, 1]]).T
-            
-            
             _angle = angle * 180.0 / 3.14159
             
             # duoi dat
@@ -688,12 +687,13 @@ class Ui_MainControllerUI(object):
                 self.count += 1 
             # tren bang chuyen
             elif self.mode == 1:
-                print('mode 1')
+                print('----------------mode 1----------------')
                 realPoints = ImgPoints2RealPoints(self.mtx_BC, self.rodrigues_Vecs_BC, self.tvects_BC, points, self.s_BC)
                 _x, _y = realPoints.item(0), realPoints.item(1)
                 pointX = _x * 2.45 - 30
                 pointY = _y * 2.45 + 20
-                print(pointX, pointY, _angle)
+                # print(pointX, pointY, _angle)
+                
                 self.sumX = pointX
                 self.sumY = pointY
                 self.sumAngle = _angle
@@ -720,7 +720,7 @@ class Ui_MainControllerUI(object):
                     aveY += 0.4
                 else:
                     aveY += 0.2
-                print(aveX, aveY, aveA)
+                # print(aveX, aveY, aveA)
                 self.sumX = 0
                 self.sumY = 0
                 self.sumAngle = 0
@@ -741,7 +741,9 @@ class Ui_MainControllerUI(object):
                 # self.myTimer.start(8000)
             self.updateTimer.setInterval(4)
 
-        except:
+        except Exception as e:
+            print(e)
+            
             frame = self.od.Get_Frame()
             height, width, channel = frame.shape
             bytesPerLine = 3 * width
@@ -811,6 +813,7 @@ class Ui_MainControllerUI(object):
                 self.createMessageBox('Camera Auto Enabled!', 'Information', 'infor')
                 self.enableCam()
         else:
+            self.enableCam()
             self.createMessageBox('Camera Auto Disabled!', 'Information', 'infor')
             logging.basicConfig(filename=self.FILE_LOG, level=logging.INFO)
             t_log = GetTime()

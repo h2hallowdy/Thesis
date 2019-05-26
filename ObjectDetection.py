@@ -64,8 +64,9 @@ class ObjectDetection():
         self.pt.updateObject(rects, objects)
         (crop, angle, cx, cy) = self.pt.updateAngle(frame, mode)
         # self.vt.update(objects)
-        # self.vt.velocityChange()
-        
+        # velocity = self.vt.velocityChange()
+        # print(velocity)
+        # print(time.time() - pre_time)
         if crop is not None:
             # frame_copy = cv2.circle(frame_copy, (cx, cy), 2, (0, 255, 0), -1)
             return frame_copy, cx, cy, angle

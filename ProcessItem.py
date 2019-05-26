@@ -167,10 +167,10 @@ class ProcessItem():
                 cen2 = (box[2] + box[1]) / 2
             _cx, _cy = (cen1 + cen2) / 2
             
-            print(_cx, _cy)
+            # print(_cx, _cy)
             
             # cv2.circle(sax, (_cx, _cy), 2, (0, 255, 0), -1)
-            cv2.imshow('haha',sax)
+            
             dodai1 = self.calculation(cen1, tam)
             dodai2 = self.calculation(cen2, tam)
             # print(dodai1, dodai2)
@@ -193,7 +193,7 @@ class ProcessItem():
             cos = v_dot / (d1*d2)
             
             #for debugging
-            print(dau, dit)
+            # print(dau, dit)
             # Positive
             if dau[1] > dit[1]:
                 angle = math.acos(cos)
@@ -203,7 +203,7 @@ class ProcessItem():
                 angle = math.acos(-1)
             elif dau[0] < dit[0]:
                 angle = 0
-            print(angle)
+            # print(angle)
             #endregion
 
             # Return real world center of product.
