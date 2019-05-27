@@ -58,12 +58,12 @@ class Ui_MainControllerUI(object):
         self.sumY = 0
         self.sumAngle = 0
         self.positionDictionary = {
-            '1': [15, 20, 90],
-            '2': [20, 20, 90],
-            '3': [25, 20, 90],
-            '4': [15, 30, 90],
-            '5': [20, 30, 90],
-            '6': [25, 30, 90],
+            '1': [25, 15, 90],
+            '2': [30, 15, 90],
+            '3': [35, 15, 90],
+            '4': [25, 10, 90],
+            '5': [30, 10, 90],
+            '6': [35, 10, 90],
         }
         self.positionDictionaryBC = {
             '1': [0, 40, 90, 1],
@@ -593,12 +593,12 @@ class Ui_MainControllerUI(object):
                 print(self.currentDestination)
                 # Nho sua 2 mode thanh 3 va 8
                 if self.mode == 0:
-                    mess = UARTMessage(nextX, nextY, nextAngle, 'r', 3)
+                    mess = UARTMessage(nextX, nextY, nextAngle, 'r', 0.7)
                     mess_bytes = bytes(mess, encoding='utf-8')
                 elif self.mode == 1:
                     mess = UARTMessage(nextX, nextY, nextAngle, 'r', nextPoints[3])
                     mess_bytes = bytes(mess, encoding='utf-8')
-                time.sleep(0.2)
+                time.sleep(0.4)
                 self.ser.write(mess_bytes)
                 
             elif command == 'r':
@@ -616,7 +616,7 @@ class Ui_MainControllerUI(object):
                 if self.mode == 1:
                     md = b"m10000000000000000000"
                     
-                    time.sleep(0.2)
+                    time.sleep(0.4)
                     self.ser.write(md)
                 else:
                     pass
@@ -716,6 +716,7 @@ class Ui_MainControllerUI(object):
                     # aveY = aveY * 10.0 + 1.8
                     
                     aveA = aveA * 10.0
+                print(aveA)
                 if aveY <= 25.0:
                     aveY += 0.4
                 else:
@@ -742,8 +743,6 @@ class Ui_MainControllerUI(object):
             self.updateTimer.setInterval(4)
 
         except Exception as e:
-            print(e)
-            
             frame = self.od.Get_Frame()
             height, width, channel = frame.shape
             bytesPerLine = 3 * width
