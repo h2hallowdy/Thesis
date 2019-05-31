@@ -21,6 +21,7 @@ from Calibration import *
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.pyplot as plt
 import random
+import xlsxwriter
 #endregion
 
 class Ui_MainControllerUI(object):
@@ -82,9 +83,11 @@ class Ui_MainControllerUI(object):
         self.myTimer.timeout.connect(self.SendDestination)
         self.runAgain = QtCore.QTimer()
         self.runAgain.timeout.connect(self.RunAgain)
-        # myports = [tuple(p) for p in list(serial.tools.list_ports.comports())]
-        # uart_port = [port for port in myports if 'COM11' in port]
-        # if len(uart_port) != 0:
+        # for Excel
+        self.workbook = xlsxwriter.Workbook('ahihi.xlsx') 
+        self.worksheet = self.workbook.add_worksheet() 
+        self.row = 0
+        self.col = 0
         try:
             self.ser.open()
             
@@ -136,7 +139,7 @@ class Ui_MainControllerUI(object):
                 "border-width: 1px;")
         self.liveVidGB.setObjectName("liveVidGB")
         self.liveVidFrame = QtWidgets.QLabel(self.liveVidGB)
-        self.liveVidFrame.setGeometry(QtCore.QRect(10, 20, 760, 650))
+        self.liveVidFrame.setGeometry(QtCore.QRect(10, 20, 760, 480))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -493,6 +496,7 @@ class Ui_MainControllerUI(object):
         MainControllerUI.setStatusBar(self.statusbar)
 
         self.figure = plt.figure()
+        self.ax = self.figure.add_subplot(111)
         self.canvas = FigureCanvas(self.figure)
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.canvas)
@@ -502,7 +506,7 @@ class Ui_MainControllerUI(object):
         
         # self.vbox.addWidget(self.canvas)
         self.processGB.setLayout(layout)
-        self.plot()
+        # self.plot()
         self.retranslateUi(MainControllerUI)
 
         if self.state:
@@ -604,11 +608,26 @@ class Ui_MainControllerUI(object):
     ########################################################################################
 
     '''Open main window( cam teaching window)'''
+    # TODO: REMEMBER TO CHANGE THOSE CODE IN ORDER IF NEEDED
     def openCamTeaching(self):
-        self.window = QtWidgets.QMainWindow()
-        self.ui = Ui_MainWindow()
-        self.ui.setupUi(self.window)
-        self.window.show()
+        # self.window = QtWidgets.QMainWindow()
+        # self.ui = Ui_MainWindow()
+        # self.ui.setupUi(self.window)
+        # self.window.show()
+        if self.state == False:
+            message = 'Error Connection. Please check ports.'
+            title = 'Error'
+            self.createMessageBox(message, title, 'error')
+            logging.basicConfig(filename=self.FILE_LOG, level=logging.ERROR)
+            t_log = GetTime()
+            logging.error(t_log + ': Error connection.')
+        else: 
+            message = b"l00000000000000000000"
+            # byteMessage = bytes(message, encoding='utf-8')
+            self.ser.write(message)
+            logging.basicConfig(filename=self.FILE_LOG, level=logging.INFO)
+            t_log = GetTime()
+            logging.info(t_log + ': Arm testing.')
 
     ########################################################################################
     #                                                                                      #
@@ -717,6 +736,7 @@ class Ui_MainControllerUI(object):
                 self.sumX = 0
                 self.sumY = 0
                 self.sumAngle = 0
+
             elif command == 'h':
                 print('homing done')
                 if self.mode == 1:
@@ -725,22 +745,27 @@ class Ui_MainControllerUI(object):
                     time.sleep(0.4)
                     self.ser.write(md)
                 else:
-                    # pass
-                    frame = self.od.Get_Frame()
-                    frame_hsv = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)     # Converting RGB system to HSV system.
-                    hand_lower = np.array([105,193,104])                         
-                    hand_upper = np.array([245,253,255])
-                    mask = cv2.inRange(frame_hsv,hand_lower,hand_upper)
-                    _, contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                    c = max(contours, key = cv2.contourArea)
-                    rectAngle = cv2.minAreaRect(c)
-                    tam = rectAngle[0]
-                    a = np.array([[tam[0], tam[1], 1]]).T
-                    realCenter = ImgPoints2RealPoints(self.mtx, self.rodrigues_Vecs, self.tvects, a, self.s)
-                    _x, _y = realCenter.item(0), realCenter.item(1)
-                    pointX = _x * 2.45 - 34.15 - 7
-                    pointY = _y * 2.45 + 0 - 9
-                    print(pointX, pointY)
+                    try:
+                        (pointX, pointY) = self.CheckPositionArm()
+                        self.WriteToExcel(self.row, self.col, pointX, pointY)
+                        self.plot(pointX, pointY, 'CAM')
+                    except:
+                        print('Error Occured')
+                    
+            elif 'x' in command:
+                if self.mode == 1:
+                    pass
+                else:
+                    data = command.split('x')[1]
+                    decX, decY = int(data[0:2]), int(data[4:6])
+                    pX, pY = int(data[2:4]), int(data[6:8])
+                    X = decX + float(pX) / 100.0
+                    Y = decY + float(pY) / 100.0
+                    
+                    self.WriteToExcel(self.row, self.col + 4, X, Y)
+                    self.row += 1
+                    self.col = 0
+                    self.plot(X, Y, 'ARM')
             else:
                 print('in nothing')
                 print(command)
@@ -976,23 +1001,25 @@ class Ui_MainControllerUI(object):
         GetCalibrationParams()
         # UsingParams(np.array([[183, 285, 1]]).T)
 
-    def plot(self):
+    def plot(self, x, y, title):
         ''' plot some random stuff '''
         # random data
-        data = [random.random() for i in range(10)]
+        # data = [random.random() for i in range(10)]
 
         # instead of ax.hold(False)
-        self.figure.clear()
+        # self.figure.clear()
 
         # create an axis
-        ax = self.figure.add_subplot(111)
+        
+        
 
         # discards the old graph
         # ax.hold(False) # deprecated, see above
-
+        if title == 'ARM':
         # plot data
-        ax.plot(data, '*-')
-
+            self.ax.plot(x, y, 'bo')
+        elif title == 'CAM':
+            self.ax.plot(x, y, 'r*')
         # refresh canvas
         self.canvas.draw()
 
@@ -1018,9 +1045,34 @@ class Ui_MainControllerUI(object):
         self.sumAngle = 0
         self.runAgain.stop()
 
+    # TODO: There is a close function for Excel file right here
     def OnValueChange(self, value):
         self.mode = value
+        if self.mode == 1:
+            self.workbook.close()
         print('Now in mode ' + str(self.mode))
+
+    def CheckPositionArm(self):
+        frame = self.od.Get_Frame()
+        frame_hsv = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)     # Converting RGB system to HSV system.
+        hand_lower = np.array([105,193,104])                         
+        hand_upper = np.array([245,253,255])
+        mask = cv2.inRange(frame_hsv,hand_lower,hand_upper)
+        _, contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        c = max(contours, key = cv2.contourArea)
+        rectAngle = cv2.minAreaRect(c)
+        tam = rectAngle[0]
+        a = np.array([[tam[0], tam[1], 1]]).T
+        realCenter = ImgPoints2RealPoints(self.mtx, self.rodrigues_Vecs, self.tvects, a, self.s)
+        _x, _y = realCenter.item(0), realCenter.item(1)
+        pointX = _x * 2.45 - 34.15 - 7
+        pointY = _y * 2.45 + 0 - 9
+        return (pointX, pointY)
+    
+    def WriteToExcel(self, row, col, data1, data2):
+        
+        self.worksheet.write(row, col, data1)
+        self.worksheet.write(row, col + 1, data2)
 
 if __name__ == "__main__":
     import sys
