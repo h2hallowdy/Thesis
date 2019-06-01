@@ -119,9 +119,20 @@ class Ui_MainControllerUI(object):
             a_bc = self.mtx_BC.dot(K_bc).dot(np.array([[1, 1, 1, 1]]).T)
             self.s_BC = a_bc.item(2)
             #endregion
+
+            #region: Load M, R, T, corners for Mode 2
+            with np.load('Calib_test.npz') as T:
+                self.mtx_T, self.dist_T, self.rvects_T, self.tvects_T, self.corners_T = [T[i] for i in ('mtx','dist','rvecs','tvecs', 'corners')]
+
+            self.rodrigues_Vecs_T = InverseRodrigues(self.rvects_T)
+            translate_T = np.reshape(self.tvects_T, (3, 1))
+            K_Te = np.concatenate((self.rodrigues_Vecs_T, translate_T), axis=1)
+            a_T = self.mtx_T.dot(K_Te).dot(np.array([[1, 1, 1, 1]]).T)
+            self.s_T = a_T.item(2)
+            #endregion
             
-        except:
-            print('error occured')
+        except Exception as e:
+            print(e)
 
     def setupUi(self, MainControllerUI):
         MainControllerUI.setObjectName("MainControllerUI")
@@ -497,6 +508,8 @@ class Ui_MainControllerUI(object):
 
         self.figure = plt.figure()
         self.ax = self.figure.add_subplot(111)
+        self.ax.set_xlim([-40, 10])
+        self.ax.set_ylim([-10,50])
         self.canvas = FigureCanvas(self.figure)
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.canvas)
@@ -759,13 +772,20 @@ class Ui_MainControllerUI(object):
                     data = command.split('x')[1]
                     decX, decY = int(data[0:2]), int(data[4:6])
                     pX, pY = int(data[2:4]), int(data[6:8])
-                    X = decX + float(pX) / 100.0
+                    X = -(decX + float(pX) / 100.0)
                     Y = decY + float(pY) / 100.0
                     
                     self.WriteToExcel(self.row, self.col + 4, X, Y)
                     self.row += 1
                     self.col = 0
                     self.plot(X, Y, 'ARM')
+                    try:
+                        (pointX, pointY) = self.CheckPositionArm()
+                        self.WriteToExcel(self.row, self.col, pointX, pointY)
+                        self.plot(pointX, pointY, 'CAM')
+                    except:
+                        print('Not camera')
+
             else:
                 print('in nothing')
                 print(command)
@@ -1017,7 +1037,7 @@ class Ui_MainControllerUI(object):
         # ax.hold(False) # deprecated, see above
         if title == 'ARM':
         # plot data
-            self.ax.plot(x, y, 'bo')
+            self.ax.plot(x, y, 'bx')
         elif title == 'CAM':
             self.ax.plot(x, y, 'r*')
         # refresh canvas
@@ -1063,10 +1083,12 @@ class Ui_MainControllerUI(object):
         rectAngle = cv2.minAreaRect(c)
         tam = rectAngle[0]
         a = np.array([[tam[0], tam[1], 1]]).T
-        realCenter = ImgPoints2RealPoints(self.mtx, self.rodrigues_Vecs, self.tvects, a, self.s)
+        realCenter = ImgPoints2RealPoints(self.mtx_T, self.rodrigues_Vecs_T, self.tvects_T, a, self.s_T)
         _x, _y = realCenter.item(0), realCenter.item(1)
-        pointX = _x * 2.45 - 34.15 - 7
-        pointY = _y * 2.45 + 0 - 9
+        pointX = _x * 2.45 - 30.57
+        pointY = _y * 2.45 + 23.5
+        cv2.imshow('ABC', mask)
+        print(pointX, pointY)
         return (pointX, pointY)
     
     def WriteToExcel(self, row, col, data1, data2):
