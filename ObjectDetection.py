@@ -11,10 +11,11 @@ from ProcessItem import ProcessItem
 
 class ObjectDetection():
     def __init__(self):
+        self.capture = cv2.VideoCapture(0)
         options = {
             'model': 'cfg/tiny-yolo-voc-1c.cfg',
             'load': 12000,
-            'threshold': 0.3,
+            'threshold': 0.25,
             'gpu': 1.0
         }
         self.tfnet = TFNet(options)
@@ -23,7 +24,7 @@ class ObjectDetection():
         self.ct = CentroidTracker()
         # self.vt = VelocityTracker(OrderedDict())
         self.pt = ProcessItem()
-        self.capture = cv2.VideoCapture(0)
+        
         
 
         fps = self.capture.get(cv2.CAP_PROP_FPS)
@@ -55,7 +56,7 @@ class ObjectDetection():
 
                     frame_copy = cv2.rectangle(frame_copy, tl, br, (0, 255, 0), 2)   
             elif mode == 1:
-                if confidence > 0.85 and ((startY + endY) / 2) > 150 and ((startX + endX) / 2) < 300:
+                if confidence > 0.7 and ((startY + endY) / 2) > 50 and ((startX + endX) / 2) < 300:
                     rects.append((startX, startY, endX, endY))
 
                     frame_copy = cv2.rectangle(frame_copy, tl, br, (0, 255, 0), 2)   
@@ -95,7 +96,10 @@ class ObjectDetection():
 if __name__ == '__main__':
     od = ObjectDetection()
     while True:
-        frame, cx, cy, crop = od.Process()
+        try:
+            frame, cx, cy, crop = od.Process(0)
+        except:
+            frame = od.Get_Frame()
         cv2.imshow('Frame', frame)
         
         if cv2.waitKey(1) == ord('q'):

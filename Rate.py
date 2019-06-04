@@ -1,4 +1,13 @@
-import xml
+from xml.dom import minidom
+
+def get_data(fileName):
+    mydoc = minidom.parse(fileName)
+    a = {}
+    a['x1'] = int(mydoc.getElementsByTagName('xmin')[0].firstChild.data)
+    a['y1'] = int(mydoc.getElementsByTagName('ymin')[0].firstChild.data)
+    a['x2'] = int(mydoc.getElementsByTagName('xmax')[0].firstChild.data)
+    a['y2'] = int(mydoc.getElementsByTagName('ymax')[0].firstChild.data)
+    return a
 
 def get_iou(bb1, bb2):
     """

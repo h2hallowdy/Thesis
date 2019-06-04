@@ -43,7 +43,7 @@ class ProcessItem():
             if mode == 0:
                 crop = img[startY - self.error : endY + self.error, startX - self.error : endX + self.error]
             elif mode == 1:
-                crop = img[startY - 5 : endY + 5, startX - 5 : endX + 5]
+                crop = img[startY - 2 : endY + 2, startX - 2 : endX + 2]
             # crop = img[startY : endY, startX : endX]
             w, h = crop.shape[1], crop.shape[0]
             _new_cenX = w / 2.0
@@ -90,36 +90,40 @@ class ProcessItem():
                 #endregion
 
                 #region: Compile 2 masks, negative and find res
-                result = mask1 + mask2
+                result = mask1
                 neg_result = 255 -result
 
-                super_result = cv2.erode(neg_result, crossmini, iterations=1)
-
+                super_result = cv2.erode(neg_result, kernel2, iterations=3)
+                abc = cv2.dilate(super_result, kernel2, iterations=3)
                 res = cv2.bitwise_and(crop, crop, mask = neg_result)
                 #endregion
 
                 #region: Processing result => using mask final mask to fill gray one
                 (width, height, nnchannels) = res.shape
-                new_img = np.zeros((height,width,nnchannels))
+                # new_img = np.zeros((height,width,nnchannels))
 
-                for xx in range(height):
-                    for yy in range(width):
-                        if neg_result[yy, xx] == 0:
-                            res[yy, xx, 0] = 149
-                            res[yy, xx, 1] = 156
-                            res[yy, xx, 2] = 135
+                # for xx in range(height):
+                #     for yy in range(width):
+                #         if neg_result[yy, xx] == 0:
+                #             res[yy, xx, 0] = 149
+                #             res[yy, xx, 1] = 156
+                #             res[yy, xx, 2] = 135
                 #endregion
 
                 #region: Same thing to find 4 points coordinates
                 cropGray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
-                _, contours, _ = cv2.findContours(super_result, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                _, contours, _ = cv2.findContours(abc, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                 c = max(contours, key = cv2.contourArea)
                 for smallerC in contours:
                     if cv2.contourArea(smallerC) > 474 and cv2.contourArea(smallerC) < 560:
                         c1 = smallerC
                         (x, y), (w, h), _ = cv2.minAreaRect(c)
                         if h != 0:
-                            ratio = w / h
+                            if w > h:
+                                ratio = w / h
+                            elif h > w:
+                                ratio = h / w
+            
                             if ratio > 1.78 and ratio < 2.3:
                                 c = smallerC
                                 break
@@ -129,6 +133,7 @@ class ProcessItem():
                 box = np.int0(box)
                 sax = crop.copy()
                 cv2.drawContours(sax, [box],0,(0,0,255),1)
+                cv2.imshow("Hahaha", sax)
                 #endregion
 
                 #endregion

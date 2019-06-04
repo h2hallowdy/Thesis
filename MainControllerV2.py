@@ -62,12 +62,12 @@ class Ui_MainControllerUI(object):
         self.sumY = 0
         self.sumAngle = 0
         self.positionDictionary = {
-            '1': [25, 15, 90],
-            '2': [30, 15, 90],
-            '3': [35, 15, 90],
-            '4': [25, 10, 90],
-            '5': [30, 10, 90],
-            '6': [35, 10, 90],
+            '1': [25, 20, 90],
+            '2': [30, 20, 90],
+            '3': [27.5, 25, 90],
+            '4': [25, 20, 90],
+            '5': [30, 20, 90],
+            '6': [27.5, 25, 90],
         }
         self.positionDictionaryBC = {
             '1': [0, 40, 90, 1],
@@ -84,10 +84,16 @@ class Ui_MainControllerUI(object):
         self.runAgain = QtCore.QTimer()
         self.runAgain.timeout.connect(self.RunAgain)
         # for Excel
-        self.workbook = xlsxwriter.Workbook('ahihi.xlsx') 
+        self.workbook = xlsxwriter.Workbook('ahaha.xlsx') 
         self.worksheet = self.workbook.add_worksheet() 
+        #Hoang's worksheet
+        self.worksheetAngle = self.workbook.add_worksheet()
         self.row = 0
         self.col = 0
+        self.rowAngle = 0
+        self.colAngle = 0
+        self.countForTest=0
+        self.testState=False
         try:
             self.ser.open()
             
@@ -627,6 +633,7 @@ class Ui_MainControllerUI(object):
         # self.ui = Ui_MainWindow()
         # self.ui.setupUi(self.window)
         # self.window.show()
+        print('In Test')
         if self.state == False:
             message = 'Error Connection. Please check ports.'
             title = 'Error'
@@ -634,7 +641,9 @@ class Ui_MainControllerUI(object):
             logging.basicConfig(filename=self.FILE_LOG, level=logging.ERROR)
             t_log = GetTime()
             logging.error(t_log + ': Error connection.')
-        else: 
+        else:
+            self.testState = True
+            self.countForTest += 1 
             message = b"l00000000000000000000"
             # byteMessage = bytes(message, encoding='utf-8')
             self.ser.write(message)
@@ -679,6 +688,8 @@ class Ui_MainControllerUI(object):
             self.sumY = 0
             self.sumAngle = 0
             self.currentDestination = 1
+            self.countForTest = 0
+            self.testState = False
             message = b"h00000000000000000000"
             # byteMessage = bytes(message, encoding='utf-8')
             self.ser.write(message)
@@ -760,7 +771,7 @@ class Ui_MainControllerUI(object):
                 else:
                     try:
                         (pointX, pointY) = self.CheckPositionArm()
-                        self.WriteToExcel(self.row, self.col, pointX, pointY)
+                        self.WriteToExcel(self.worksheet,self.row, self.col, pointX, pointY)
                         self.plot(pointX, pointY, 'CAM')
                     except:
                         print('Error Occured')
@@ -769,23 +780,27 @@ class Ui_MainControllerUI(object):
                 if self.mode == 1:
                     pass
                 else:
-                    data = command.split('x')[1]
-                    decX, decY = int(data[0:2]), int(data[4:6])
-                    pX, pY = int(data[2:4]), int(data[6:8])
-                    X = -(decX + float(pX) / 100.0)
-                    Y = decY + float(pY) / 100.0
-                    
-                    self.WriteToExcel(self.row, self.col + 4, X, Y)
-                    self.row += 1
-                    self.col = 0
-                    self.plot(X, Y, 'ARM')
+                    try:
+                        data = command.split('x')[1]
+                        decX, decY = int(data[0:2]), int(data[4:6])
+                        pX, pY = int(data[2:4]), int(data[6:8])
+                        X = -(decX + float(pX) / 100.0)
+                        Y = decY + float(pY) / 100.0
+                        self.WriteToExcel(self.worksheet,self.row, self.col + 4, X, Y)
+                        self.row += 1
+                        self.col = 0
+                        self.plot(X, Y, 'ARM')
+                    except: 
+                        print('Error in write data')
                     try:
                         (pointX, pointY) = self.CheckPositionArm()
-                        self.WriteToExcel(self.row, self.col, pointX, pointY)
+                        self.WriteToExcel(self.worksheet,self.row, self.col, pointX, pointY)
                         self.plot(pointX, pointY, 'CAM')
                     except:
                         print('Not camera')
-
+                    if self.countForTest < 20 and self.testState == True:
+                        time.sleep(1)
+                        self.openCamTeaching()
             else:
                 print('in nothing')
                 print(command)
@@ -879,11 +894,21 @@ class Ui_MainControllerUI(object):
                 # update toa do sau xx seconds
                 if self.mode == 1:
                     aveX = aveX * 10.0 + 0.9
-                    aveY = aveY * 10.0 + 2.1 + (1.51 + 0.25 + 0.275) * (20.0 / 6.42)
+                    # aveY = aveY * 10.0 + 2.1 + (1.51 + 0.25 + 0.275) * (20.0 / 6.42)
+                    aveY = aveY * 10.0 - 0.4
+                    if aveY < 10:
+                        aveY += 1.3
+                        aveX += 1
+                    elif aveY >= 10 and aveY <= 22:
+                        aveY += 0.6
+                    else:
+                        pass
                     # aveY = aveY * 10.0 + 1.8
                     
                     aveA = aveA * 10.0
                 print(aveA)
+                self.WriteToExcel(self.worksheetAngle, self.rowAngle, self.colAngle, aveX, aveY)
+                self.rowAngle += 1
                 if aveY <= 25.0:
                     aveY += 0.4
                 else:
@@ -1086,15 +1111,15 @@ class Ui_MainControllerUI(object):
         realCenter = ImgPoints2RealPoints(self.mtx_T, self.rodrigues_Vecs_T, self.tvects_T, a, self.s_T)
         _x, _y = realCenter.item(0), realCenter.item(1)
         pointX = _x * 2.45 - 30.57
-        pointY = _y * 2.45 + 23.5
+        pointY = _y * 2.45 + 24
         cv2.imshow('ABC', mask)
         print(pointX, pointY)
         return (pointX, pointY)
     
-    def WriteToExcel(self, row, col, data1, data2):
+    def WriteToExcel(self, worksheet, row, col, data1, data2):
         
-        self.worksheet.write(row, col, data1)
-        self.worksheet.write(row, col + 1, data2)
+        worksheet.write(row, col, data1)
+        worksheet.write(row, col + 1, data2)
 
 if __name__ == "__main__":
     import sys
