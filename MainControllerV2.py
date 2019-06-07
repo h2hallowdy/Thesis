@@ -84,7 +84,7 @@ class Ui_MainControllerUI(object):
         self.runAgain = QtCore.QTimer()
         self.runAgain.timeout.connect(self.RunAgain)
         # for Excel
-        self.workbook = xlsxwriter.Workbook('ahaha.xlsx') 
+        self.workbook = xlsxwriter.Workbook('laplai.xlsx') 
         self.worksheet = self.workbook.add_worksheet() 
         #Hoang's worksheet
         self.worksheetAngle = self.workbook.add_worksheet()
@@ -94,6 +94,8 @@ class Ui_MainControllerUI(object):
         self.colAngle = 0
         self.countForTest=0
         self.testState=False
+        self.velocity = 0
+        self.checkVec = 0
         try:
             self.ser.open()
             
@@ -846,92 +848,105 @@ class Ui_MainControllerUI(object):
         
     def update_Image(self):
         try:
-            frame, cx, cy, angle = self.od.Process(self.mode)
-            height, width, channel = frame.shape
-            bytesPerLine = 3 * width
-            qImg = QtGui.QImage(frame.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888).rgbSwapped()
-            qPixMap = QtGui.QPixmap(qImg)
-            qPixMap = qPixMap.scaled(self.liveVidFrame.width(), self.liveVidFrame.height(),QtCore.Qt.KeepAspectRatio)
-            self.liveVidFrame.setPixmap(qPixMap)
-            points = np.array([[cx, cy, 1]]).T
-            _angle = angle * 180.0 / 3.14159
-            
-            # duoi dat
-            if self.mode == 0:
-                print('mode 0')
-                realPoints = ImgPoints2RealPoints(self.mtx, self.rodrigues_Vecs, self.tvects, points, self.s)
-                _x, _y = realPoints.item(0), realPoints.item(1)
-                pointX = _x * 2.45 - 34.15
-                pointY = _y * 2.45 + 0
-                self.sumX += pointX
-                self.sumY += pointY
-                self.sumAngle += _angle
-                self.count += 1 
-            # tren bang chuyen
-            elif self.mode == 1:
-                print('----------------mode 1----------------')
-                realPoints = ImgPoints2RealPoints(self.mtx_BC, self.rodrigues_Vecs_BC, self.tvects_BC, points, self.s_BC)
-                _x, _y = realPoints.item(0), realPoints.item(1)
-                pointX = _x * 2.45 - 30
-                pointY = _y * 2.45 + 20
-                # print(pointX, pointY, _angle)
+            if self.stateProcess == False:
+                frame, cx, cy, angle = self.od.Process(self.mode)
+                height, width, channel = frame.shape
+                bytesPerLine = 3 * width
+                qImg = QtGui.QImage(frame.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888).rgbSwapped()
+                qPixMap = QtGui.QPixmap(qImg)
+                qPixMap = qPixMap.scaled(self.liveVidFrame.width(), self.liveVidFrame.height(),QtCore.Qt.KeepAspectRatio)
+                self.liveVidFrame.setPixmap(qPixMap)
+                points = np.array([[cx, cy, 1]]).T
+                _angle = angle * 180.0 / 3.14159
                 
-                self.sumX = pointX
-                self.sumY = pointY
-                self.sumAngle = _angle
-                self.count = 10
-            self.xProLbl.setText(str(pointX))
-            self.yProLbl.setText(str(pointY))
-            # print(_angle)
-            
-            if self.state == True and self.stateProcess == False and self.count == 10:
-                print('---------------------')
-                self.count = 0
-                aveA = self.sumAngle / 10.0
-                aveX = self.sumX / 10.0 
-                aveY = self.sumY / 10.0
-                
-                # update toa do sau xx seconds
-                if self.mode == 1:
-                    aveX = aveX * 10.0 + 0.9
-                    # aveY = aveY * 10.0 + 2.1 + (1.51 + 0.25 + 0.275) * (20.0 / 6.42)
-                    aveY = aveY * 10.0 - 0.4
-                    if aveY < 10:
-                        aveY += 1.3
-                        aveX += 1
-                    elif aveY >= 10 and aveY <= 22:
-                        aveY += 0.6
-                    else:
-                        pass
-                    # aveY = aveY * 10.0 + 1.8
-                    
-                    aveA = aveA * 10.0
-                print(aveA)
-                self.WriteToExcel(self.worksheetAngle, self.rowAngle, self.colAngle, aveX, aveY)
-                self.rowAngle += 1
-                if aveY <= 25.0:
-                    aveY += 0.4
-                else:
-                    aveY += 0.2
-                # print(aveX, aveY, aveA)
-                self.sumX = 0
-                self.sumY = 0
-                self.sumAngle = 0
-                self.stateProcess = True
-                self.objectCounting += 1
-                logging.basicConfig(filename=self.FILE_LOG, level=logging.INFO)
-                t_log = GetTime()
-                logging.info(t_log + ': ' + 'Object number ' + str(self.objectCounting) + ' in progress.')
-
+                # duoi dat
                 if self.mode == 0:
-                    message = UARTMessage(aveX, aveY, aveA, 'c', 3)
-                    message_bytes = bytes(message, encoding='utf-8')
+                    print('mode 0')
+                    realPoints = ImgPoints2RealPoints(self.mtx, self.rodrigues_Vecs, self.tvects, points, self.s)
+                    _x, _y = realPoints.item(0), realPoints.item(1)
+                    pointX = _x * 2.45 - 34.15
+                    pointY = _y * 2.45 + 0
+                    self.sumX += pointX
+                    self.sumY += pointY
+                    self.sumAngle += _angle
+                    self.count += 1 
+                # tren bang chuyen
                 elif self.mode == 1:
-                    message = UARTMessage(aveX, aveY, aveA, 'c', 9)
-                    message_bytes = bytes(message, encoding='utf-8')
-                self.ser.write(message_bytes)
+                    print('----------------mode 1----------------')
+                    realPoints = ImgPoints2RealPoints(self.mtx_BC, self.rodrigues_Vecs_BC, self.tvects_BC, points, self.s_BC)
+                    _x, _y = realPoints.item(0), realPoints.item(1)
+                    pointX = _x * 2.45 - 30
+                    pointY = _y * 2.45 + 20
+                    # print(pointX, pointY, _angle)
+                    
+                    self.sumX = pointX
+                    self.sumY = pointY
+                    self.sumAngle = _angle
+                    self.count = 10
+                self.xProLbl.setText(str(pointX))
+                self.yProLbl.setText(str(pointY))
+                # print(_angle)
                 
-                # self.myTimer.start(8000)
+                if self.state == True and self.stateProcess == False and self.count == 10:
+                    print('---------------------')
+                    self.count = 0
+                    aveA = self.sumAngle / 10.0
+                    aveX = self.sumX / 10.0 
+                    aveY = self.sumY / 10.0
+                    
+                    # update toa do sau xx seconds
+                    if self.mode == 1:
+                        aveX = aveX * 10.0 + 0.9
+                        aveY = aveY * 10.0 - 0.4 + (1.5465 + 0.25 + 0.275) * (25 / 5.675)
+                        # aveY = aveY * 10.0 - 0.4
+                        if aveY < 10:
+                            aveY += 1.3
+                            aveX += 1.3
+                        elif aveY >= 10 and aveY <= 22:
+                            aveY += 0.6
+                            aveX -= 0.6
+                        else:
+                            pass
+                        if aveA > -2.0 and aveA < 2.0:
+                            aveY -= 0.2
+                        # aveY = aveY * 10.0 + 1.8
+                        
+                        aveA = aveA * 10.0
+                    print(aveA)
+                    self.WriteToExcel(self.worksheetAngle, self.rowAngle, self.colAngle, aveX, aveY)
+                    self.rowAngle += 1
+                    if aveY <= 25.0:
+                        aveY += 0.4
+                    else:
+                        aveY += 0.2
+                    
+                    self.sumX = 0
+                    self.sumY = 0
+                    self.sumAngle = 0
+                    self.stateProcess = True
+                    self.objectCounting += 1
+                    logging.basicConfig(filename=self.FILE_LOG, level=logging.INFO)
+                    t_log = GetTime()
+                    logging.info(t_log + ': ' + 'Object number ' + str(self.objectCounting) + ' in progress.')
+
+                    if self.mode == 0:
+                        message = UARTMessage(aveX, aveY, aveA, 'c', 3)
+                        message_bytes = bytes(message, encoding='utf-8')
+                    elif self.mode == 1:
+                        message = UARTMessage(aveX, aveY, aveA, 'c', 8.5)
+                        message_bytes = bytes(message, encoding='utf-8')
+                    self.ser.write(message_bytes)
+            else:
+                frame = self.od.Get_Frame()
+                height, width, channel = frame.shape
+                bytesPerLine = 3 * width
+                qImg = QtGui.QImage(frame.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888).rgbSwapped()
+                qPixMap = QtGui.QPixmap(qImg)
+                qPixMap = qPixMap.scaled(self.liveVidFrame.width(), self.liveVidFrame.height(),QtCore.Qt.KeepAspectRatio)
+                self.liveVidFrame.setPixmap(qPixMap)
+                
+                 
+                    # self.myTimer.start(8000)
             self.updateTimer.setInterval(5)
 
         except Exception as e:

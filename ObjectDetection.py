@@ -51,12 +51,12 @@ class ObjectDetection():
             text = '{}: {:.0f}%'.format(label, confidence * 100)
             (startX, startY, endX, endY) = (result['topleft']['x'], result['topleft']['y'], result['bottomright']['x'], result['bottomright']['y'])
             if mode == 0:
-                if confidence > 0.85 and ((startX + endX) / 2) < 300:
+                if ((startX + endX) / 2) < 300:
                     rects.append((startX, startY, endX, endY))
 
                     frame_copy = cv2.rectangle(frame_copy, tl, br, (0, 255, 0), 2)   
             elif mode == 1:
-                if confidence > 0.7 and ((startY + endY) / 2) > 50 and ((startX + endX) / 2) < 300:
+                if ((startY + endY) / 2) > 100 and ((startX + endX) / 2) < 300:
                     rects.append((startX, startY, endX, endY))
 
                     frame_copy = cv2.rectangle(frame_copy, tl, br, (0, 255, 0), 2)   
