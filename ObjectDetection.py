@@ -33,10 +33,61 @@ class ObjectDetection():
         self.angle = 0
         self.cx = 0
         self.cy = 0
+        #region: Testing
+        try:
+            #region: Load M, R, T, corners for Mode 1
+            with np.load('Calib.npz') as X:
+                self.mtx, self.dist, self.rvects, self.tvects, self.corners = [X[i] for i in ('mtx','dist','rvecs','tvecs', 'corners')]
+           
+            self.rodrigues_Vecs = InverseRodrigues(self.rvects)
+            translate = np.reshape(self.tvects, (3, 1))
+            K = np.concatenate((self.rodrigues_Vecs, translate), axis=1)
+            a = self.mtx.dot(K).dot(np.array([[1, 1, 1, 1]]).T)
+            self.s = a.item(2)
+            #endregion
+
+            #region: Load M, R, T, corners for Mode 2
+            with np.load('Calib_bc.npz') as P:
+                self.mtx_BC, self.dist_BC, self.rvects_BC, self.tvects_BC, self.corners_BC = [P[i] for i in ('mtx','dist','rvecs','tvecs', 'corners')]
+
+            self.rodrigues_Vecs_BC = InverseRodrigues(self.rvects_BC)
+            translate_BC = np.reshape(self.tvects_BC, (3, 1))
+            K_bc = np.concatenate((self.rodrigues_Vecs_BC, translate_BC), axis=1)
+            a_bc = self.mtx_BC.dot(K_bc).dot(np.array([[1, 1, 1, 1]]).T)
+            self.s_BC = a_bc.item(2)
+            #endregion
+
+            #region: Load M, R, T, corners for Mode 2
+            with np.load('Calib_test.npz') as T:
+                self.mtx_T, self.dist_T, self.rvects_T, self.tvects_T, self.corners_T = [T[i] for i in ('mtx','dist','rvecs','tvecs', 'corners')]
+
+            self.rodrigues_Vecs_T = InverseRodrigues(self.rvects_T)
+            translate_T = np.reshape(self.tvects_T, (3, 1))
+            K_Te = np.concatenate((self.rodrigues_Vecs_T, translate_T), axis=1)
+            a_T = self.mtx_T.dot(K_Te).dot(np.array([[1, 1, 1, 1]]).T)
+            self.s_T = a_T.item(2)
+            #endregion
+            
+        except Exception as e:
+            print(e)
+        #endregion
     
     def Process(self, mode):
         pre_time = time.time()
-        ret, frame = self.capture.read()
+        ret, img = self.capture.read()
+
+        # region: Testing 
+        h,  w = img.shape[:2]
+        newcameramtx, roi=cv2.getOptimalNewCameraMatrix(self.mtx,self.dist,(w,h),1,(w,h))
+        # undistort
+        dst = cv2.undistort(img, self.mtx, self.dist, None, newcameramtx)
+
+        # crop the image
+        x,y,w,h = roi
+        frame = dst[y:y+h, x:x+w]
+
+        #endregion
+        
         # frame = cv2.resize(frame, (640, 360))
         frame_copy = frame.copy()
         results = self.tfnet.return_predict(frame)
