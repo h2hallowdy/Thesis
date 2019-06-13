@@ -107,14 +107,13 @@ class Ui_MainControllerUI(object):
             print('cannot find any connection')
         try:
             #region: Load M, R, T, corners for Mode 1
-            with np.load('Calib.npz') as X:
-                self.mtx, self.dist, self.rvects, self.tvects, self.corners = [X[i] for i in ('mtx','dist','rvecs','tvecs', 'corners')]
+            with np.load('B.npz') as X:
+                self.mtx, self.dist, self.rvects, self.tvects, self.corners, self.tvec1, self.rvec1, self.s, self.newcameramtx = [X[i] for i in ('mtx','dist','rvecs','tvecs', 'corners','tvec1','rvec1', 's', 'newcameramtx')]
            
-            self.rodrigues_Vecs = InverseRodrigues(self.rvects)
-            translate = np.reshape(self.tvects, (3, 1))
-            K = np.concatenate((self.rodrigues_Vecs, translate), axis=1)
-            a = self.mtx.dot(K).dot(np.array([[1, 1, 1, 1]]).T)
-            self.s = a.item(2)
+            self.rodrigues_Vecs = InverseRodrigues(self.rvec1)
+            point = np.array([[153, 68, 1]], dtype=np.float32).T
+            realWorldPoints = ImgPoints2RealPoints(self.newcameramtx, self.rodrigues_Vecs, self.tvec1, point, self.s)
+            print(realWorldPoints)
             #endregion
 
             #region: Load M, R, T, corners for Mode 2
@@ -862,10 +861,11 @@ class Ui_MainControllerUI(object):
                 # duoi dat
                 if self.mode == 0:
                     print('mode 0')
-                    realPoints = ImgPoints2RealPoints(self.mtx, self.rodrigues_Vecs, self.tvects, points, self.s)
+                    realPoints = ImgPoints2RealPoints(self.newcameramtx, self.rodrigues_Vecs, self.tvec1, points, self.s)
                     _x, _y = realPoints.item(0), realPoints.item(1)
-                    pointX = _x * 2.45 - 34.15
-                    pointY = _y * 2.45 + 0
+                    pointX = _x * 2.45 - 28.8
+                    pointY = _y * 2.45 + 19
+                    print(pointX, pointY)
                     self.sumX += pointX
                     self.sumY += pointY
                     self.sumAngle += _angle
