@@ -3,8 +3,8 @@
   <filename>351.jpg</filename>
   <segmented>0</segmented>
   <size>
-    <width>1280</width>
-    <height>720</height>
+    <width>640</width>
+    <height>480</height>
     <depth>3</depth>
   </size>
   <object>
@@ -13,10 +13,34 @@
     <truncated>0</truncated>
     <difficult>0</difficult>
     <bndbox>
-      <xmin>565</xmin>
-      <ymin>515</ymin>
-      <xmax>679</xmax>
-      <ymax>611</ymax>
+      <xmin>67</xmin>
+      <ymin>206</ymin>
+      <xmax>113</xmax>
+      <ymax>244</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>battery</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+      <xmin>103</xmin>
+      <ymin>332</ymin>
+      <xmax>150</xmax>
+      <ymax>375</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>battery</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+      <xmin>245</xmin>
+      <ymin>119</ymin>
+      <xmax>290</xmax>
+      <ymax>163</ymax>
     </bndbox>
   </object>
 </annotation>

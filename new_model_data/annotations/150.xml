@@ -3,8 +3,8 @@
   <filename>150.jpg</filename>
   <segmented>0</segmented>
   <size>
-    <width>1280</width>
-    <height>720</height>
+    <width>640</width>
+    <height>480</height>
     <depth>3</depth>
   </size>
   <object>
@@ -13,10 +13,22 @@
     <truncated>0</truncated>
     <difficult>0</difficult>
     <bndbox>
-      <xmin>678</xmin>
-      <ymin>531</ymin>
-      <xmax>778</xmax>
-      <ymax>632</ymax>
+      <xmin>235</xmin>
+      <ymin>183</ymin>
+      <xmax>276</xmax>
+      <ymax>223</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>battery</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+      <xmin>175</xmin>
+      <ymin>198</ymin>
+      <xmax>220</xmax>
+      <ymax>232</ymax>
     </bndbox>
   </object>
 </annotation>

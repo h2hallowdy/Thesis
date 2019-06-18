@@ -4,17 +4,19 @@ import numpy as np
 import imutils
 import time
 import math
+import random
 from collections import OrderedDict
 from CentroidTracker import CentroidTracker
 from VelocityTracker import VelocityTracker
 from ProcessItem import ProcessItem
+from ProcessErasor import ProcessErasor
 
 class ObjectDetection():
     def __init__(self):
-        self.capture = cv2.VideoCapture(0)
+        self.capture = cv2.VideoCapture('Bangchuyens.avi')
         options = {
-            'model': 'cfg/tiny-yolo-voc-1c.cfg',
-            'load': 12000,
+            'model': 'cfg/tiny-yolo-voc-2c.cfg',
+            'load': 12250,
             'threshold': 0.25,
             'gpu': 1.0
         }
@@ -22,11 +24,10 @@ class ObjectDetection():
         self.colors = [tuple(255 * np.random.rand(3)) for _ in range(5)]
         # initialize our centroid tracker and frame dimensions
         self.ct = CentroidTracker()
+        self.ct_erasor = CentroidTracker()
         # self.vt = VelocityTracker(OrderedDict())
         self.pt = ProcessItem()
-        
-        
-
+        self.pt_erasor = ProcessErasor()
         fps = self.capture.get(cv2.CAP_PROP_FPS)
         self.wait_time = 1000 / fps
         self.count = 0
@@ -41,53 +42,68 @@ class ObjectDetection():
         frame_copy = frame.copy()
         results = self.tfnet.return_predict(frame)
         rects = []
-        
+        rects_erasor=[]
         for idx, result in enumerate(results):
             tl = (result['topleft']['x'], result['topleft']['y'])
             br = (result['bottomright']['x'], result['bottomright']['y'])
 
             label = result['label']
             confidence = result['confidence']
-            text = '{}: {:.0f}%'.format(label, confidence * 100)
+            text = '{}'.format(label)
             (startX, startY, endX, endY) = (result['topleft']['x'], result['topleft']['y'], result['bottomright']['x'], result['bottomright']['y'])
             if mode == 0:
                 if ((startX + endX) / 2) < 300:
-                    rects.append((startX, startY, endX, endY))
-
-                    frame_copy = cv2.rectangle(frame_copy, tl, br, (0, 255, 0), 2)   
+                    if label == 'battery':
+                        rects.append((startX, startY, endX, endY))
+                        frame_copy = cv2.rectangle(frame_copy, tl, br, (0, 255, 0), 2)  
+                        cv2.putText(frame_copy, text, (int((startX + endX) / 2) - 10, int((startY + endY) / 2) - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                    elif label == 'erasor':
+                        rects_erasor.append((startX, startY, endX, endY))
+                        frame_copy = cv2.rectangle(frame_copy, tl, br, (0, 0, 255), 2)  
+                        cv2.putText(frame_copy, text, (int((startX + endX) / 2) - 10, int((startY + endY) / 2) - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
             elif mode == 1:
-                if ((startY + endY) / 2) > 100 and ((startX + endX) / 2) < 300:
-                    rects.append((startX, startY, endX, endY))
-
-                    frame_copy = cv2.rectangle(frame_copy, tl, br, (0, 255, 0), 2)   
-
+                if ((startX + endX) / 2) < 300 and ((startY + endY) / 2) > 100:
+                    if label == 'battery':
+                        rects.append((startX, startY, endX, endY))
+                        frame_copy = cv2.rectangle(frame_copy, tl, br, (0, 255, 0), 2)  
+                        cv2.putText(frame_copy, text, (int((startX + endX) / 2) - 10, int((startY + endY) / 2) - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                    elif label == 'erasor':
+                        rects_erasor.append((startX, startY, endX, endY))
+                        frame_copy = cv2.rectangle(frame_copy, tl, br, (0, 0, 255), 2)  
+                        cv2.putText(frame_copy, text, (int((startX + endX) / 2) - 10, int((startY + endY) / 2) - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
         objects = self.ct.update(rects)
-        self.pt.updateObject(rects, objects)
-        (crop, angle, cx, cy) = self.pt.updateAngle(frame, mode)
-        # self.vt.update(objects)
-        # velocity = self.vt.velocityChange()
-        # print(velocity)
-        # print(time.time() - pre_time)
-        if crop is not None:
-            # frame_copy = cv2.circle(frame_copy, (cx, cy), 2, (0, 255, 0), -1)
-            return frame_copy, cx, cy, angle
-        else:
+        erasors = self.ct_erasor.update(rects_erasor)
+        '''
+        randomize what to return : battery or erasor?
+        len(objects) == 0 => erasors only
+        len(erasors) == 0 => battery only
+        Battery => processItem()
+        Erasor => Other...()
+        '''
+        for (objectID, centroid) in objects.items():
+            text = "ID {}".format(objectID)
+            cv2.circle(frame_copy, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
+        for (objectID, centroid) in erasors.items():
+            text = "ID {}".format(objectID)
+            cv2.circle(frame_copy, (centroid[0], centroid[1]), 4, (0, 0, 255), -1)
+        if len(objects) != 0:
+            productStyle = 'Battery'
+            self.pt.updateObject(rects, objects)
+            (crop, angle, cx, cy) = self.pt.updateAngle(frame, mode)
+            return frame_copy, cx, cy, angle, productStyle
+        if len(erasors) != 0:
+            productStyle = 'Erasor'
+            self.pt_erasor.updateObject(rects_erasor, erasors)
+            (crop, angle, cx, cy) = self.pt_erasor.updateAngle(frame, mode)
+            return frame_copy, cx, cy, angle, productStyle
+        else: 
+            print('Nothing to catch')
             pass
-        #region: Do later
-        # for displaying
-        # for (objectID, centroid) in objects.items():
-        #     # velocity = self.vt.velocity[objectID]
-        #     # draw both the ID of the object and the centroid of the
-        #     # object on the output frame
-        #     text = "ID {}".format(objectID)
-        #     # textVelocity = "{}".format(velocity)
-        #     cv2.putText(frame_copy, text, (centroid[0] - 10, centroid[1] - 10),
-        #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-        #     cv2.putText(frame_copy, textVelocity, (centroid[0] + 10, centroid[1] + 10),
-        #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
-        #     cv2.circle(frame_copy, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
-        #endregion
-        # return frame, cx, cy, crop
+          
 
     def Get_Frame(self):
         ret, last_frame = self.capture.read()
@@ -97,8 +113,12 @@ if __name__ == '__main__':
     od = ObjectDetection()
     while True:
         try:
-            frame, cx, cy, crop = od.Process(0)
-        except:
+            frame, _,_, angle, style = od.Process(0)
+            # frame = od.Process(1)
+            print('{} ---- {}'.format(angle * 180.0 /3.14159, style))
+            
+        except Exception as e:
+            print(e)
             frame = od.Get_Frame()
         cv2.imshow('Frame', frame)
         

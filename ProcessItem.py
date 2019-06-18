@@ -43,7 +43,7 @@ class ProcessItem():
             if mode == 0:
                 crop = img[startY - self.error : endY + self.error, startX - self.error : endX + self.error]
             elif mode == 1:
-                crop = img[startY - 2 : endY + 2, startX - 2 : endX + 2]
+                crop = img[startY - 10 : endY + 10, startX - 5 : endX + 5]
             # crop = img[startY : endY, startX : endX]
             w, h = crop.shape[1], crop.shape[0]
             _new_cenX = w / 2.0
@@ -61,7 +61,7 @@ class ProcessItem():
                 box = cv2.boxPoints(rect)
                 box = np.int0(box)
                 cv2.drawContours(cropGray, [box],0,(0,0,255),1)
-                cv2.imshow('dilation',cropGray)
+                # cv2.imshow('dilation',cropGray)
                 #endregion
             elif mode == 1:
                 #region: On conveyor belt image processing
@@ -173,7 +173,9 @@ class ProcessItem():
             _cx, _cy = (cen1 + cen2) / 2
             
             # print(_cx, _cy)
-            
+            if mode == 0:
+                cv2.circle(cropGray, (int(_cx), int(_cy)), 2, (0, 255, 0), -1)
+                cv2.imshow('Result', cropGray)
             # cv2.circle(sax, (_cx, _cy), 2, (0, 255, 0), -1)
             
             dodai1 = self.calculation(cen1, tam)
@@ -208,6 +210,22 @@ class ProcessItem():
                 angle = math.acos(-1)
             elif dau[0] < dit[0]:
                 angle = 0
+            # please uncomment this when there are too bright
+            # angle_real = (angle * 180.0) / 3.14159
+            # if angle_real == 0 or angle_real == -0 or angle_real == 180 or angle_real == -180:
+            #     _cy = _cy - 1
+            # elif angle_real > 0 and angle_real <= 90:
+            #     _cy = _cy - 1 * abs(math.sin(angle))
+            #     _cx = _cx + 1 * abs(math.cos(angle))
+            # elif angle_real > -180 and angle_real <= -90:
+            #     _cy = _cy - 1 * abs(math.sin(angle))
+            #     _cx = _cx + 1 * abs(math.cos(angle))
+            # elif angle_real > 90 and angle_real < 180:
+            #     _cy = _cy - 1 * abs(math.sin(3.14159 - angle))
+            #     _cx = _cx + 1 * abs(math.cos(3.14159 - angle))
+            # elif angle_real > -90 and angle_real < 0:
+            #     _cy = _cy - 1 * abs(math.sin(3.14159 - angle))
+            #     _cx = _cx + 1 * abs(math.cos(3.14159 - angle))    
             # print(angle)
             #endregion
 

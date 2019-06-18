@@ -3,8 +3,8 @@
   <filename>347.jpg</filename>
   <segmented>0</segmented>
   <size>
-    <width>1280</width>
-    <height>720</height>
+    <width>640</width>
+    <height>480</height>
     <depth>3</depth>
   </size>
   <object>
@@ -13,10 +13,34 @@
     <truncated>0</truncated>
     <difficult>0</difficult>
     <bndbox>
-      <xmin>576</xmin>
-      <ymin>522</ymin>
-      <xmax>673</xmax>
-      <ymax>611</ymax>
+      <xmin>132</xmin>
+      <ymin>33</ymin>
+      <xmax>175</xmax>
+      <ymax>57</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>battery</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+      <xmin>111</xmin>
+      <ymin>158</ymin>
+      <xmax>142</xmax>
+      <ymax>205</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>battery</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+      <xmin>107</xmin>
+      <ymin>333</ymin>
+      <xmax>149</xmax>
+      <ymax>376</ymax>
     </bndbox>
   </object>
 </annotation>

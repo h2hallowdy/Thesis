@@ -104,7 +104,7 @@ def GetCalibrationParams():
                 print(XYZ)
             
             s_mean, s_std = np.mean(s_describe), np.std(s_describe)
-            np.savez('B.npz', mtx=mtx, dist=dist, rvecs=rvecs, tvecs=tvecs, corners=corners2, tvec1=tvec1, rvec1=rvec1,s=s_mean, newcameramtx=newcameramtx)
+            np.savez('Calib_bc.npz', mtx=mtx, dist=dist, rvecs=rvecs, tvecs=tvecs, corners=corners2, tvec1=tvec1, rvec1=rvec1,s=s_mean, newcameramtx=newcameramtx)
             print(">>>>>>>>>>>>>>>>>>>>> S RESULTS")
             print("Mean: "+ str(s_mean))
             #print("Average: " + str(s_arr[0]))

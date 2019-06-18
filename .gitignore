@@ -52,3 +52,6 @@ ckpt/*
 *.mp4
 *.xml
 battery_model_data_bosung/
+erasor_model_data/
+new_model_data/
+*.avi

@@ -3,8 +3,8 @@
   <filename>50.jpg</filename>
   <segmented>0</segmented>
   <size>
-    <width>1280</width>
-    <height>720</height>
+    <width>640</width>
+    <height>480</height>
     <depth>3</depth>
   </size>
   <object>
@@ -13,10 +13,34 @@
     <truncated>0</truncated>
     <difficult>0</difficult>
     <bndbox>
-      <xmin>624</xmin>
-      <ymin>236</ymin>
-      <xmax>776</xmax>
-      <ymax>372</ymax>
+      <xmin>125</xmin>
+      <ymin>179</ymin>
+      <xmax>163</xmax>
+      <ymax>218</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>battery</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+      <xmin>259</xmin>
+      <ymin>141</ymin>
+      <xmax>294</xmax>
+      <ymax>181</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>battery</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+      <xmin>196</xmin>
+      <ymin>276</ymin>
+      <xmax>244</xmax>
+      <ymax>303</ymax>
     </bndbox>
   </object>
 </annotation>

@@ -3,8 +3,8 @@
   <filename>369.jpg</filename>
   <segmented>0</segmented>
   <size>
-    <width>1280</width>
-    <height>720</height>
+    <width>640</width>
+    <height>480</height>
     <depth>3</depth>
   </size>
   <object>
@@ -13,10 +13,34 @@
     <truncated>0</truncated>
     <difficult>0</difficult>
     <bndbox>
-      <xmin>570</xmin>
-      <ymin>523</ymin>
-      <xmax>679</xmax>
-      <ymax>611</ymax>
+      <xmin>162</xmin>
+      <ymin>141</ymin>
+      <xmax>213</xmax>
+      <ymax>170</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>battery</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+      <xmin>309</xmin>
+      <ymin>370</ymin>
+      <xmax>350</xmax>
+      <ymax>420</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>battery</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+      <xmin>23</xmin>
+      <ymin>394</ymin>
+      <xmax>62</xmax>
+      <ymax>437</ymax>
     </bndbox>
   </object>
 </annotation>

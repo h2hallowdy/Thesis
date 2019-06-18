@@ -3,8 +3,8 @@
   <filename>120.jpg</filename>
   <segmented>0</segmented>
   <size>
-    <width>1280</width>
-    <height>720</height>
+    <width>640</width>
+    <height>480</height>
     <depth>3</depth>
   </size>
   <object>
@@ -13,10 +13,34 @@
     <truncated>0</truncated>
     <difficult>0</difficult>
     <bndbox>
-      <xmin>673</xmin>
-      <ymin>533</ymin>
-      <xmax>789</xmax>
-      <ymax>634</ymax>
+      <xmin>245</xmin>
+      <ymin>253</ymin>
+      <xmax>288</xmax>
+      <ymax>296</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>battery</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+      <xmin>187</xmin>
+      <ymin>253</ymin>
+      <xmax>218</xmax>
+      <ymax>305</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>battery</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+      <xmin>96</xmin>
+      <ymin>257</ymin>
+      <xmax>129</xmax>
+      <ymax>313</ymax>
     </bndbox>
   </object>
 </annotation>

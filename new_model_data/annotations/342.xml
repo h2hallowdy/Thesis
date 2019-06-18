@@ -3,8 +3,8 @@
   <filename>342.jpg</filename>
   <segmented>0</segmented>
   <size>
-    <width>1280</width>
-    <height>720</height>
+    <width>640</width>
+    <height>480</height>
     <depth>3</depth>
   </size>
   <object>
@@ -13,10 +13,34 @@
     <truncated>0</truncated>
     <difficult>0</difficult>
     <bndbox>
-      <xmin>572</xmin>
-      <ymin>523</ymin>
-      <xmax>673</xmax>
-      <ymax>611</ymax>
+      <xmin>98</xmin>
+      <ymin>48</ymin>
+      <xmax>135</xmax>
+      <ymax>85</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>battery</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+      <xmin>129</xmin>
+      <ymin>192</ymin>
+      <xmax>170</xmax>
+      <ymax>231</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>battery</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+      <xmin>227</xmin>
+      <ymin>88</ymin>
+      <xmax>276</xmax>
+      <ymax>125</ymax>
     </bndbox>
   </object>
 </annotation>

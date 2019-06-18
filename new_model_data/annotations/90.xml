@@ -3,8 +3,8 @@
   <filename>90.jpg</filename>
   <segmented>0</segmented>
   <size>
-    <width>1280</width>
-    <height>720</height>
+    <width>640</width>
+    <height>480</height>
     <depth>3</depth>
   </size>
   <object>
@@ -13,10 +13,22 @@
     <truncated>0</truncated>
     <difficult>0</difficult>
     <bndbox>
-      <xmin>631</xmin>
-      <ymin>235</ymin>
-      <xmax>775</xmax>
-      <ymax>374</ymax>
+      <xmin>180</xmin>
+      <ymin>153</ymin>
+      <xmax>214</xmax>
+      <ymax>196</ymax>
+    </bndbox>
+  </object>
+  <object>
+    <name>battery</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+      <xmin>154</xmin>
+      <ymin>288</ymin>
+      <xmax>200</xmax>
+      <ymax>324</ymax>
     </bndbox>
   </object>
 </annotation>

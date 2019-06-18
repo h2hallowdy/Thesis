@@ -3,8 +3,8 @@
   <filename>282.jpg</filename>
   <segmented>0</segmented>
   <size>
-    <width>1280</width>
-    <height>720</height>
+    <width>640</width>
+    <height>480</height>
     <depth>3</depth>
   </size>
   <object>
@@ -13,10 +13,10 @@
     <truncated>0</truncated>
     <difficult>0</difficult>
     <bndbox>
-      <xmin>592</xmin>
-      <ymin>412</ymin>
-      <xmax>657</xmax>
-      <ymax>517</ymax>
+      <xmin>55</xmin>
+      <ymin>100</ymin>
+      <xmax>96</xmax>
+      <ymax>136</ymax>
     </bndbox>
   </object>
 </annotation>

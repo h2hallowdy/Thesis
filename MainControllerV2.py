@@ -33,6 +33,7 @@ class Ui_MainControllerUI(object):
     stateAutoMode = False
     stateProcess = False
     stateHoming = False
+    stateProduct2 = False
     mode = 0
     # running = threading.Event()
     # running.set()
@@ -62,12 +63,20 @@ class Ui_MainControllerUI(object):
         self.sumY = 0
         self.sumAngle = 0
         self.positionDictionary = {
-            '1': [25, 20, 90],
-            '2': [30, 20, 90],
-            '3': [27.5, 25, 90],
-            '4': [25, 20, 90],
-            '5': [30, 20, 90],
-            '6': [27.5, 25, 90],
+            '1': [15, 15, 90],
+            '2': [20, 15, 90],
+            '3': [25, 15, 90],
+            '4': [15, 15, 90],
+            '5': [20, 15, 90],
+            '6': [25, 15, 90],
+        }
+        self.positionErasor = {
+            '1': [15, 25, 90],
+            '2': [20, 25, 90],
+            '3': [25, 25, 90],
+            '4': [15, 25, 90],
+            '5': [20, 25, 90],
+            '6': [25, 25, 90],
         }
         self.positionDictionaryBC = {
             '1': [0, 40, 90, 1],
@@ -77,8 +86,17 @@ class Ui_MainControllerUI(object):
             '5': [0, 40, 90, 3],
             '6': [0, 40, 90, 4.5]
         }
+        self.positionDictionaryBCErasor = {
+            '1': [10, 35, 90, 1],
+            '2': [10, 35, 90, 3],
+            '3': [10, 35, 90, 4.5],
+            '4': [10, 35, 90, 1],
+            '5': [10, 35, 90, 3],
+            '6': [10, 35, 90, 4.5]
+        }
         self.objectCounting = 0
         self.currentDestination = 1
+        self.currentDestinationErasor = 1
         self.myTimer = QtCore.QTimer()
         self.myTimer.timeout.connect(self.SendDestination)
         self.runAgain = QtCore.QTimer()
@@ -111,20 +129,23 @@ class Ui_MainControllerUI(object):
                 self.mtx, self.dist, self.rvects, self.tvects, self.corners, self.tvec1, self.rvec1, self.s, self.newcameramtx = [X[i] for i in ('mtx','dist','rvecs','tvecs', 'corners','tvec1','rvec1', 's', 'newcameramtx')]
            
             self.rodrigues_Vecs = InverseRodrigues(self.rvec1)
-            point = np.array([[153, 68, 1]], dtype=np.float32).T
+            point = np.array([[214, 235, 1]], dtype=np.float32).T
             realWorldPoints = ImgPoints2RealPoints(self.newcameramtx, self.rodrigues_Vecs, self.tvec1, point, self.s)
             print(realWorldPoints)
             #endregion
 
             #region: Load M, R, T, corners for Mode 2
             with np.load('Calib_bc.npz') as P:
-                self.mtx_BC, self.dist_BC, self.rvects_BC, self.tvects_BC, self.corners_BC = [P[i] for i in ('mtx','dist','rvecs','tvecs', 'corners')]
+                self.mtx_BC, self.dist_BC, self.rvects_BC, self.tvects_BC, self.corners_BC, self.tvec1_BC, self.rvec1_BC, self.s_BC, self.newcameramtx_BC = [P[i] for i in ('mtx','dist','rvecs','tvecs', 'corners', 'tvec1', 'rvec1', 's', 'newcameramtx')]
 
-            self.rodrigues_Vecs_BC = InverseRodrigues(self.rvects_BC)
-            translate_BC = np.reshape(self.tvects_BC, (3, 1))
-            K_bc = np.concatenate((self.rodrigues_Vecs_BC, translate_BC), axis=1)
-            a_bc = self.mtx_BC.dot(K_bc).dot(np.array([[1, 1, 1, 1]]).T)
-            self.s_BC = a_bc.item(2)
+            self.rodrigues_Vecs_BC = InverseRodrigues(self.rvec1_BC)
+            # translate_BC = np.reshape(self.tvects_BC, (3, 1))
+            # K_bc = np.concatenate((self.rodrigues_Vecs_BC, translate_BC), axis=1)
+            # a_bc = self.mtx_BC.dot(K_bc).dot(np.array([[1, 1, 1, 1]]).T)
+            # self.s_BC = a_bc.item(2)
+            point = np.array([[216, 237, 1]], dtype=np.float32).T
+            realWorldPoints = ImgPoints2RealPoints(self.newcameramtx_BC, self.rodrigues_Vecs_BC, self.tvec1_BC, point, self.s_BC)
+            print(realWorldPoints)
             #endregion
 
             #region: Load M, R, T, corners for Mode 2
@@ -730,17 +751,35 @@ class Ui_MainControllerUI(object):
             command = message
             if command == 'c':
                 print('in c')
-                index = str(self.currentDestination)
+                print(self.stateProduct2)
+                if self.stateProduct2 == False:
+                    index = str(self.currentDestination)
+                else:
+                    index = str(self.currentDestinationErasor)
+                print(index)
                 if self.mode == 0:
-                    nextPoints = self.positionDictionary[index]
+                    if self.stateProduct2 == False:
+                        nextPoints = self.positionDictionary[index]
+                    else:
+                        nextPoints = self.positionErasor[index]
                 elif self.mode == 1:
-                    nextPoints = self.positionDictionaryBC[index]
+                    if self.stateProduct2 == False:
+                        nextPoints = self.positionDictionaryBC[index]
+                    else:
+                        nextPoints = self.positionDictionaryBCErasor[index]
+                   
                 nextX, nextY, nextAngle = nextPoints[0], nextPoints[1], nextPoints[2]
                 if self.currentDestination < 6:
-                    self.currentDestination += 1
-                else:
+                    if self.stateProduct2 == False:
+                        self.currentDestination += 1
+                if self.currentDestinationErasor < 6:
+                    if self.stateProduct2 == True:
+                        self.currentDestinationErasor += 1
+                if self.currentDestination >= 6:
                     self.currentDestination = 1
-                print(self.currentDestination)
+                if self.currentDestinationErasor >= 6:
+                    self.currentDestinationErasor = 1
+                
                 # Nho sua 2 mode thanh 3 va 8
                 if self.mode == 0:
                     mess = UARTMessage(nextX, nextY, nextAngle, 'r', 0.7)
@@ -765,11 +804,15 @@ class Ui_MainControllerUI(object):
             elif command == 'h':
                 print('homing done')
                 if self.mode == 1:
-                    md = b"m10000000000000000000"
+                    md = b"m1-000000000000000000"
                     
                     time.sleep(0.4)
                     self.ser.write(md)
                 else:
+                    md = b"m0-000000000000000000"
+                    
+                    time.sleep(0.4)
+                    self.ser.write(md)
                     try:
                         (pointX, pointY) = self.CheckPositionArm()
                         self.WriteToExcel(self.worksheet,self.row, self.col, pointX, pointY)
@@ -847,109 +890,111 @@ class Ui_MainControllerUI(object):
         
     def update_Image(self):
         try:
-            if self.stateProcess == False:
-                frame, cx, cy, angle = self.od.Process(self.mode)
-                height, width, channel = frame.shape
-                bytesPerLine = 3 * width
-                qImg = QtGui.QImage(frame.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888).rgbSwapped()
-                qPixMap = QtGui.QPixmap(qImg)
-                qPixMap = qPixMap.scaled(self.liveVidFrame.width(), self.liveVidFrame.height(),QtCore.Qt.KeepAspectRatio)
-                self.liveVidFrame.setPixmap(qPixMap)
-                points = np.array([[cx, cy, 1]]).T
-                _angle = angle * 180.0 / 3.14159
+            # if self.stateProcess == False:
+            frame, cx, cy, angle, productStyle = self.od.Process(self.mode)
+            height, width, channel = frame.shape
+            bytesPerLine = 3 * width
+            qImg = QtGui.QImage(frame.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888).rgbSwapped()
+            qPixMap = QtGui.QPixmap(qImg)
+            qPixMap = qPixMap.scaled(self.liveVidFrame.width(), self.liveVidFrame.height(),QtCore.Qt.KeepAspectRatio)
+            self.liveVidFrame.setPixmap(qPixMap)
+            points = np.array([[cx, cy, 1]]).T
+            _angle = angle * 180.0 / 3.14159
                 
-                # duoi dat
-                if self.mode == 0:
-                    print('mode 0')
-                    realPoints = ImgPoints2RealPoints(self.newcameramtx, self.rodrigues_Vecs, self.tvec1, points, self.s)
-                    _x, _y = realPoints.item(0), realPoints.item(1)
-                    pointX = _x * 2.45 - 28.8
-                    pointY = _y * 2.45 + 19
-                    print(pointX, pointY)
-                    self.sumX += pointX
-                    self.sumY += pointY
-                    self.sumAngle += _angle
-                    self.count += 1 
-                # tren bang chuyen
-                elif self.mode == 1:
-                    print('----------------mode 1----------------')
-                    realPoints = ImgPoints2RealPoints(self.mtx_BC, self.rodrigues_Vecs_BC, self.tvects_BC, points, self.s_BC)
-                    _x, _y = realPoints.item(0), realPoints.item(1)
-                    pointX = _x * 2.45 - 30
-                    pointY = _y * 2.45 + 20
-                    # print(pointX, pointY, _angle)
+            # duoi dat
+            if self.mode == 0:
+                if productStyle == 'Battery':
+                    self.stateProduct2 = False
+                else:
+                    self.stateProduct2 = True
+                realPoints = ImgPoints2RealPoints(self.newcameramtx, self.rodrigues_Vecs, self.tvec1, points, self.s)
+                _x, _y = realPoints.item(0), realPoints.item(1)
+                pointX = _x * 2.45 - 28.8
+                pointY = _y * 2.45 + 19
+                print(pointX, pointY)
+                self.sumX += pointX
+                self.sumY += pointY
+                self.sumAngle += _angle
+                self.count += 1 
+            # tren bang chuyen
+            elif self.mode == 1:
+                if productStyle == 'Battery':
+                    self.stateProduct2 = False
+                else:
+                    self.stateProduct2 = True
+                realPoints = ImgPoints2RealPoints(self.newcameramtx_BC, self.rodrigues_Vecs_BC, self.tvec1_BC, points, self.s_BC)
+                _x, _y = realPoints.item(0), realPoints.item(1)
+                pointX = _x * 2.45 - 31.5
+                pointY = _y * 2.45 + 11.85
+                # print(pointX, pointY, _angle)
                     
-                    self.sumX = pointX
-                    self.sumY = pointY
-                    self.sumAngle = _angle
-                    self.count = 10
-                self.xProLbl.setText(str(pointX))
-                self.yProLbl.setText(str(pointY))
-                # print(_angle)
+                self.sumX = pointX
+                self.sumY = pointY
+                self.sumAngle = _angle
+                self.count = 10
+            self.xProLbl.setText(str(pointX))
+            self.yProLbl.setText(str(pointY))
+            # print(_angle)
                 
-                if self.state == True and self.stateProcess == False and self.count == 10:
-                    print('---------------------')
-                    self.count = 0
-                    aveA = self.sumAngle / 10.0
-                    aveX = self.sumX / 10.0 
-                    aveY = self.sumY / 10.0
+            if self.state == True and self.stateProcess == False and self.count == 10:
+                print('---------------------')
+                self.count = 0
+                aveA = self.sumAngle / 10.0
+                aveX = self.sumX / 10.0 
+                aveY = self.sumY / 10.0
                     
-                    # update toa do sau xx seconds
-                    if self.mode == 1:
-                        aveX = aveX * 10.0 + 0.9
-                        aveY = aveY * 10.0 - 0.4 + (1.5465 + 0.25 + 0.275) * (25 / 5.675)
-                        # aveY = aveY * 10.0 - 0.4
-                        if aveY < 10:
-                            aveY += 1.3
-                            aveX += 1.3
-                        elif aveY >= 10 and aveY <= 22:
-                            aveY += 0.6
-                            aveX -= 0.6
-                        else:
-                            pass
-                        if aveA > -2.0 and aveA < 2.0:
-                            aveY -= 0.2
-                        # aveY = aveY * 10.0 + 1.8
-                        
-                        aveA = aveA * 10.0
-                    print(aveA)
-                    self.WriteToExcel(self.worksheetAngle, self.rowAngle, self.colAngle, aveX, aveY)
-                    self.rowAngle += 1
-                    if aveY <= 25.0:
-                        aveY += 0.4
-                    else:
-                        aveY += 0.2
+                #region: update toa do sau xx seconds TODO: update for not using offsets
+                # if self.mode == 1:
+                #     aveX = aveX * 10.0 + 0.9
+                #     aveY = aveY * 10.0 - 0.4 + (1.5465 + 0.25 + 0.275) * (25 / 5.675)
+                #     # aveY = aveY * 10.0 - 0.4
+                #     if aveY < 10:
+                #         aveY += 1.3
+                #         aveX += 1.3
+                #     elif aveY >= 10 and aveY <= 22:
+                #         aveY += 0.6
+                #         aveX -= 0.6
+                #     else:
+                #         pass
+                #     if aveA > -2.0 and aveA < 2.0:
+                #         aveY -= 0.2
+                #     aveA = aveA * 10.0
+                #endregion
+                if self.mode == 1:
+                    aveX = aveX * 10.0
+                    aveY = aveY * 10.0 + (1.5465 + 0.25 + 0.275) * (25 / 5.675)
                     
-                    self.sumX = 0
-                    self.sumY = 0
-                    self.sumAngle = 0
-                    self.stateProcess = True
-                    self.objectCounting += 1
-                    logging.basicConfig(filename=self.FILE_LOG, level=logging.INFO)
-                    t_log = GetTime()
-                    logging.info(t_log + ': ' + 'Object number ' + str(self.objectCounting) + ' in progress.')
+                    # aveY = aveY * 10.0 - 0.4
+                    aveA = aveA * 10.0  
+                print(aveX, aveY, aveA)
+                self.WriteToExcel(self.worksheetAngle, self.rowAngle, self.colAngle, aveX, aveY)
+                self.rowAngle += 1
+                #region: Uncomment this if anything bad happend
+                # if aveY <= 25.0:
+                #     aveY += 0.4
+                # else:
+                #     aveY += 0.2
+                #endregion
+                self.sumX = 0
+                self.sumY = 0
+                self.sumAngle = 0
+                self.stateProcess = True
+                self.objectCounting += 1
+                logging.basicConfig(filename=self.FILE_LOG, level=logging.INFO)
+                t_log = GetTime()
+                logging.info(t_log + ': ' + 'Object number ' + str(self.objectCounting) + ' in progress.')
 
-                    if self.mode == 0:
-                        message = UARTMessage(aveX, aveY, aveA, 'c', 3)
-                        message_bytes = bytes(message, encoding='utf-8')
-                    elif self.mode == 1:
-                        message = UARTMessage(aveX, aveY, aveA, 'c', 8.5)
-                        message_bytes = bytes(message, encoding='utf-8')
-                    self.ser.write(message_bytes)
-            else:
-                frame = self.od.Get_Frame()
-                height, width, channel = frame.shape
-                bytesPerLine = 3 * width
-                qImg = QtGui.QImage(frame.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888).rgbSwapped()
-                qPixMap = QtGui.QPixmap(qImg)
-                qPixMap = qPixMap.scaled(self.liveVidFrame.width(), self.liveVidFrame.height(),QtCore.Qt.KeepAspectRatio)
-                self.liveVidFrame.setPixmap(qPixMap)
-                
-                 
-                    # self.myTimer.start(8000)
-            self.updateTimer.setInterval(5)
+                if self.mode == 0:
+                    message = UARTMessage(aveX, aveY, aveA, 'c', 3)
+                    message_bytes = bytes(message, encoding='utf-8')
+                elif self.mode == 1:
+                    message = UARTMessage(aveX, aveY, aveA, 'c', 8.5)
+                    message_bytes = bytes(message, encoding='utf-8')
+                self.ser.write(message_bytes)
+            
 
         except Exception as e:
+            print(e)
             frame = self.od.Get_Frame()
             height, width, channel = frame.shape
             bytesPerLine = 3 * width
@@ -1111,6 +1156,7 @@ class Ui_MainControllerUI(object):
         if self.mode == 1:
             self.workbook.close()
         print('Now in mode ' + str(self.mode))
+        
 
     def CheckPositionArm(self):
         frame = self.od.Get_Frame()
